@@ -1,0 +1,124 @@
+# Builds one branch, started by hand (Actions, build, Run workflow, or
+# `gh workflow run build.yml -f ref=<branch>`), and pushes what it built to
+# ghcr.io as OCI artifacts. Nothing runs on push or pull request.
+#
+# workflow_dispatch only lists workflows from the default branch, so this file
+# lives on main and checks out the branch it is given. It runs whatever build
+# tasks that branch has: today `task quickshell:rpm`; `task iso` once a
+# milestone adds it. A task the branch lacks is skipped with a notice.
+#
+# Every build is an edge build, and a milestone branch is tied to its milestone:
+#
+#   branch m1-minimal-desktop, milestone folder meta/milestones/001-minimal-desktop
+#     tags  edge-001 (moving: latest build of milestone 001)
+#           edge-001-20261016-3b54a9d (immutable: UTC date and short commit)
+#     ISO   stack-os-edge-001-minimal-desktop-20261016-3b54a9d-x86_64.iso
+#   any other branch, e.g. main
+#     tags  edge-main-20261016-3b54a9d
+#     ISO   stack-os-edge-main-20261016-3b54a9d-x86_64.iso
+#
+# Artifacts: ghcr.io/<owner>/stack-os-quickshell (the RPM) and
+# ghcr.io/<owner>/stack-os-iso (the installer). Fetch with `oras pull`.
+#
+# Every input is pinned (decision 01): actions by commit, Task and oras by
+# version and checksum.
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch to build
+        type: string
+        default: main
+
+concurrency:
+  group: build-${{ inputs.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+    env:
+      # Inputs reach scripts only through env, never pasted into `run:`.
+      REF: ${{ inputs.ref }}
+      TASK_VERSION: 3.54.0
+      TASK_SHA256: 680859dbb4d881a9c72d4d9a8f510825450849af8567deacd7302c01124416fb
+      ORAS_VERSION: 1.3.4
+      ORAS_SHA256: f27adb935022d94df8dc77719c322dda592c78a0d57a6f7dcdd8d900b248c454
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Install Task and oras
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLo task.tgz "https://github.com/go-task/task/releases/download/v$TASK_VERSION/task_linux_amd64.tar.gz"
+          curl -fsSLo oras.tgz "https://github.com/oras-project/oras/releases/download/v$ORAS_VERSION/oras_${ORAS_VERSION}_linux_amd64.tar.gz"
+          printf '%s  task.tgz\n%s  oras.tgz\n' "$TASK_SHA256" "$ORAS_SHA256" | sha256sum -c
+          sudo tar -xzf task.tgz -C /usr/local/bin task
+          sudo tar -xzf oras.tgz -C /usr/local/bin oras
+          task --version
+          oras version
+
+      # Tags and file names from the header: edge-<NNN> for a milestone branch
+      # (m<N>-<slug> with a meta/milestones/<NNN>-<slug> folder), edge-<branch>
+      # for anything else.
+      - name: Name the build
+        id: name
+        run: |
+          stamp="$(date -u +%Y%m%d)-$(git rev-parse --short=7 HEAD)"
+          if [[ $REF =~ ^m([0-9]+)-[a-z0-9-]+$ ]] &&
+            dir=$(ls -d "meta/milestones/$(printf %03d "${BASH_REMATCH[1]}")"-* 2>/dev/null); then
+            dir=${dir##*/}
+            channel="edge-${dir%%-*}"
+            echo "tags=$channel,$channel-$stamp" >> "$GITHUB_OUTPUT"
+            echo "iso=stack-os-$channel-${dir#*-}-$stamp-x86_64.iso" >> "$GITHUB_OUTPUT"
+          else
+            channel="edge-$(tr -c 'a-z0-9.\n-' '-' <<< "${REF,,}")"
+            echo "tags=$channel-$stamp" >> "$GITHUB_OUTPUT"
+            echo "iso=stack-os-$channel-$stamp-x86_64.iso" >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+      - name: Log in to ghcr.io
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin <<< "$TOKEN"
+
+      - name: Quickshell RPM
+        env:
+          TAGS: ${{ steps.name.outputs.tags }}
+        run: |
+          if ! task --summary quickshell:rpm > /dev/null 2>&1; then
+            echo "::notice::$REF has no quickshell:rpm task; skipped"
+            exit 0
+          fi
+          task quickshell:rpm
+          rpm=$(task quickshell:path)
+          cd "$(dirname "$rpm")"
+          oras push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/stack-os-quickshell:$TAGS" \
+            "$(basename "$rpm"):application/x-rpm"
+
+      # shortcut: assumes `task iso` writes exactly one output/*.iso; settle the
+      # path when the ISO step lands.
+      - name: Installer ISO
+        env:
+          TAGS: ${{ steps.name.outputs.tags }}
+          ISO: ${{ steps.name.outputs.iso }}
+        run: |
+          if ! task --summary iso > /dev/null 2>&1; then
+            echo "::notice::$REF has no iso task; skipped"
+            exit 0
+          fi
+          task iso
+          sudo mv output/*.iso "output/$ISO"
+          cd output
+          oras push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/stack-os-iso:$TAGS" \
+            "$ISO:application/vnd.efi.iso"
