@@ -1,0 +1,3 @@
+[run]
+# Node is not required: run node-shebang CLIs (astro) with Bun.
+bun = true

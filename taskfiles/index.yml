@@ -1,0 +1,16 @@
+version: "3"
+
+# Semantic index over references/ (cocoindex-code), served to Claude Code by .mcp.json.
+tasks:
+  setup:
+    desc: Install cocoindex-code and pick the embedding model (once per machine)
+    dir: references
+    cmds:
+      - uv tool install --upgrade 'cocoindex-code[full]'
+      - ccc init
+
+  build:
+    desc: Build or update the index after adding or updating references/
+    dir: references
+    cmds:
+      - ccc index

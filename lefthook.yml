@@ -1,0 +1,52 @@
+# Git hooks, installed by `bun install` at the repo root. Run every check on all files: `bun run lint`.
+# Each job only runs when matching files are staged. references/ is never checked or formatted.
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: biome
+      exclude: &exclude_refs
+        - "references/**"
+      glob: "*.{js,mjs,cjs,ts,tsx,json,jsonc,css,astro}"
+      run: bunx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+    - name: astro check
+      root: "docs/"
+      glob: "*.{ts,mjs,astro,md,mdx}"
+      run: bun run check
+
+    - name: prettier (yaml)
+      exclude: *exclude_refs
+      glob: "*.{yml,yaml}"
+      run: bunx prettier --write {staged_files}
+      stage_fixed: true
+
+    - name: shfmt
+      exclude: *exclude_refs
+      glob: "*.{sh,bash}"
+      run: uvx --from shfmt-py==4.2.0 shfmt -i 2 -w {staged_files}
+      stage_fixed: true
+
+    - name: shellcheck
+      exclude: *exclude_refs
+      glob: "*.{sh,bash}"
+      run: uvx --from shellcheck-py==0.11.0.1 shellcheck {staged_files}
+
+prepare-commit-msg:
+  jobs:
+    - name: dco-signoff
+      run: 'git interpret-trailers --in-place --if-exists doNothing --trailer "Signed-off-by: $(git config user.name) <$(git config user.email)>" {1}'
+
+commit-msg:
+  jobs:
+    - name: no-ai-attribution
+      run: |
+        if grep -qiE '^co-authored-by:.*(claude|anthropic|copilot|openai|chatgpt|gemini)|generated with .*(claude|copilot|chatgpt|gemini)' {1}; then
+          echo "AI attribution is not allowed (AGENTS.md)." >&2
+          exit 1
+        fi
+
+    - name: dco
+      run: |
+        grep -q '^Signed-off-by: ' {1} || { echo "Missing DCO Signed-off-by line." >&2; exit 1; }

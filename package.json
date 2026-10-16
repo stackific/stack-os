@@ -1,0 +1,18 @@
+{
+  "name": "stack-os",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "postinstall": "lefthook install",
+    "lint": "lefthook run pre-commit --all-files --no-stage-fixed"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@go-task/cli": "3.54.0",
+    "lefthook": "2.1.16",
+    "prettier": "3.9.9"
+  },
+  "trustedDependencies": [
+    "@go-task/cli"
+  ]
+}

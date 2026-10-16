@@ -16,6 +16,7 @@ coverage/
 .nyc_output/
 
 # Caches
+.task/
 .cache/
 .eslintcache
 .stylelintcache
@@ -48,5 +49,9 @@ Thumbs.db
 # Claude Code personal settings
 .claude/settings.local.json
 
-# Third-party code for research, cloned locally (see meta/REFERENCES.md)
-references/
+# Third-party code for research, cloned locally (see meta/roadmaps/refs.md).
+# Only the cocoindex-code project settings are tracked.
+references/*
+!references/.cocoindex_code/
+references/.cocoindex_code/*
+!references/.cocoindex_code/settings.yml

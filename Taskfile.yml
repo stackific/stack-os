@@ -1,0 +1,29 @@
+version: "3"
+
+# Each project folder has its own Taskfile.yml with an `install` task, included here and called by `setup`.
+includes:
+  docs:
+    taskfile: ./docs/Taskfile.yml
+    dir: ./docs
+  index: ./taskfiles/index.yml
+
+tasks:
+  default:
+    cmds:
+      - "{{.TASK_EXE}} --list"
+
+  setup:
+    desc: Install all dependencies and the git hooks
+    preconditions:
+      - sh: command -v bun
+        msg: Install Bun first, see README.md
+      - sh: command -v uv
+        msg: Install uv first, see README.md
+    cmds:
+      - bun install
+      - task: docs:install
+
+  lint:
+    desc: Run every pre-commit check on all files
+    cmds:
+      - bun run lint

@@ -24,10 +24,7 @@
     "ponytail@ponytail": true
   },
   "permissions": {
-    "allow": [
-      "Bash(bun install)",
-      "Bash(bun run:*)"
-    ],
+    "allow": ["Bash(bun install)", "Bash(bun run:*)"],
     "deny": [
       "Bash(git push origin main:*)",
       "Bash(git push --force:*)",
@@ -48,9 +45,7 @@
       }
     ]
   },
-  "enabledMcpjsonServers": [
-    "cocoindex-code"
-  ],
+  "enabledMcpjsonServers": ["cocoindex-code"],
   "attribution": {
     "commit": "",
     "pr": ""
