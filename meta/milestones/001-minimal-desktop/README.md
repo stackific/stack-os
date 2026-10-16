@@ -34,7 +34,7 @@ Steps:
 - [x] 2 (b15b840): Quickshell bar with the foot launcher icon
 - [x] 3 (92c6d28): power menu: lock, log out (`mmsg dispatch quit`), restart, shut down (`systemctl`) (decision 03)
 - [x] 4 (08cfc10): image skeleton: Containerfile, feature layout, `task image:build`, `task image:check` (assertions inside the built image), zram swap via `zram-generator` (decision 01)
-- [ ] 5: login manager into Mango (decision 02)
+- [x] 5 (4860587): login manager into Mango (decision 02)
 - [ ] 6: display scale from physical DPI, `task scale:test` (decision 04)
 - [ ] 7: VM boot test on a Btrfs root: `task disk:qcow2`, `task vm:run` (QEMU with KVM)
 - [ ] 8: installer ISO that installs to Btrfs: `task iso`, `task vm:install`

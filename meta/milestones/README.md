@@ -5,9 +5,9 @@ Milestones are rolling, added as the roadmap grows. One folder per milestone, `N
 ## Status
 
 Milestone: M1 (planned, approved)
-Step: 001-05 (login manager) done on branch `m1-minimal-desktop`; 001-04 is 08cfc10
+Step: 001-06 (display scale) done on branch `m1-minimal-desktop`; 001-05 is 4860587
 Open PRs: #2 (001: Minimal desktop)
-Next: 001-06 (display scale from physical DPI)
+Next: 001-07 (VM boot test on a Btrfs root)
 
 ## Milestones
 

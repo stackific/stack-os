@@ -27,12 +27,15 @@ tasks:
       - getent passwd greetd
       - grep -q 'tuigreet --remember --asterisks --sessions /usr/share/stack-os/wayland-sessions' /etc/greetd/config.toml
       - test "$(ls /usr/share/stack-os/wayland-sessions)" = stack-os.desktop
-      - grep -q '^Exec=mango -c /usr/share/stack-os/mango/config.conf$' /usr/share/stack-os/wayland-sessions/stack-os.desktop
+      - grep -q '^Exec=/usr/libexec/stack-os/session$' /usr/share/stack-os/wayland-sessions/stack-os.desktop
+      - test -x /usr/libexec/stack-os/session
+      - grep -q '^source_optional=~/.local/state/stack-os/monitors.conf$' /usr/share/stack-os/mango/config.conf
       - grep -q '^source=/etc/mango/config.conf$' /usr/share/stack-os/mango/config.conf
       - grep -q '^allow_lock_transparent=0$' /usr/share/stack-os/mango/config.conf
       - grep -q '^bind=SUPER,l,spawn,qs -p /usr/share/stack-os/shell ipc call lock lock$' /usr/share/stack-os/mango/config.conf
-      # Mango parses the session config without errors.
-      - mango -c /usr/share/stack-os/mango/config.conf -p
+      # Mango parses the session config without errors (`mango -p` exits 0
+      # even on errors, so its output must be empty).
+      - test -z "$(mango -c /usr/share/stack-os/mango/config.conf -p 2>&1)"
       - grep -q '^ExecStart=/usr/bin/qs -p /usr/share/stack-os/shell$' /usr/lib/systemd/user/stack-os-shell.service
       - grep -q '^Restart=on-failure$' /usr/lib/systemd/user/stack-os-shell.service
       - grep -q '^Environment=QS_DISABLE_FILE_WATCHER=1$' /usr/lib/systemd/user/stack-os-shell.service

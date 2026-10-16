@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+# Reruns stack-os-scale when the set of monitors changes (decision 04), so a
+# hotplugged monitor gets its scale. `mmsg watch all-monitors` prints the
+# monitors as JSON on every arrange, focus or tag change, not only on hotplug,
+# so the script runs only when the monitor names in that line change. It also
+# runs once at start, for a monitor plugged in between login and this watcher.
+# If the stream ends, the watcher exits non-zero so systemd restarts it.
+set -euo pipefail
+scale="$(dirname "$0")/stack-os-scale"
+"$scale" || true
+last=""
+while read -r line; do
+  names=$(grep -o '"name":"[^"]*"' <<<"$line" | sort -u | tr '\n' ' ' || true)
+  [[ $names == "$last" ]] && continue
+  last=$names
+  "$scale" || true
+done < <(mmsg watch all-monitors)
+exit 1

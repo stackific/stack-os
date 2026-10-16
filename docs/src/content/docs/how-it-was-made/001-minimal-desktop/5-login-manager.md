@@ -5,7 +5,7 @@ sidebar:
   order: 5
 ---
 
-001-05: login manager into Mango with the shell as a service
+[001-05: login manager into Mango with the shell as a service](https://github.com/stackific/stack-os/commit/4860587bd8ea8658d9f28a83867879cab57037d2)
 
 ## Goal
 

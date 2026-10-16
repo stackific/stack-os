@@ -42,6 +42,9 @@ includes:
   image:
     taskfile: ./src/image/Taskfile.yml
     dir: ./src/image
+  scale:
+    taskfile: ./src/scale/Taskfile.yml
+    dir: ./src/scale
   host: ./taskfiles/host.yml
   index: ./taskfiles/index.yml
 
@@ -62,6 +65,7 @@ tasks:
       # Reaches quickshell:install and dev:install through its dependencies.
       - task: dev:setup
       - task: image:install
+      - task: scale:install
 
   lint:
     desc: Run every pre-commit check on all files

@@ -1,0 +1,18 @@
+version: "3"
+
+# Display scale from physical DPI (decision 04): stack-os-scale writes Mango
+# monitor rules from each monitor's EDID size, and scale-watch reruns it on
+# hotplug. The image installs both (src/image/features/scale); here they are
+# tested against fake sysfs trees.
+tasks:
+  install:
+    desc: Check the tools the scale tests need on the host
+    preconditions:
+      - sh: command -v awk && command -v od
+        msg: Install gawk and coreutils first
+
+  test:
+    desc: Test the scale formula on EDID samples (laptop, 27" 4K, 1080p, 0 mm)
+    deps: [install]
+    cmds:
+      - bash test/run.sh

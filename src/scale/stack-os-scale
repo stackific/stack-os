@@ -1,0 +1,80 @@
+#!/usr/bin/bash
+# stack-os-scale [output-file]
+#
+# Picks a scale for every connected monitor from its physical size (decision
+# 04) and writes one Mango `monitor_rule` per monitor to a file that only this
+# script writes (default ~/.local/state/stack-os/monitors.conf), which the
+# Stack OS Mango config loads with `source_optional=`. Runs before Mango
+# starts (/usr/libexec/stack-os/session) and on every hotplug (the watcher);
+# Mango reloads the file by itself.
+#
+# Inputs, all readable without root: the connector's status, its EDID bytes
+# 21-22 (width and height in cm) and the first line of `modes` (the kernel's
+# preferred mode, the one Mango picks with no rule). A line `<connector>
+# <scale>` in ~/.config/stack-os/scale.conf overrides a monitor; only a plain
+# number from 0.5 to 4 is accepted, the last line for a connector wins, and
+# anything else is ignored. The output path is fixed (no XDG_STATE_HOME),
+# because the Stack OS Mango config loads it from that path.
+#
+# STACK_OS_DRM and STACK_OS_SCALE_OVERRIDES point elsewhere for tests.
+set -euo pipefail
+
+drm=${STACK_OS_DRM:-/sys/class/drm}
+out=${1:-$HOME/.local/state/stack-os/monitors.conf}
+overrides=${STACK_OS_SCALE_OVERRIDES:-${XDG_CONFIG_HOME:-$HOME/.config}/stack-os/scale.conf}
+
+# scale <width-cm> <height-cm> <mode-width> <mode-height> <built-in 0|1>
+scale() {
+  awk -v w="$1" -v h="$2" -v px="$3" -v py="$4" -v builtin="$5" 'BEGIN {
+    # No size, or an aspect ratio stored as a size (projectors, most VMs).
+    if (w == 0 || h == 0 || (w == 160 && (h == 90 || h == 100)) || (w == 16 && (h == 9 || h == 10))) {
+      print 1
+      exit
+    }
+    inches = sqrt((w * 10) ^ 2 + (h * 10) ^ 2) / 25.4
+    dpi = sqrt(px ^ 2 + py ^ 2) / inches
+    target = (builtin || inches < 20) ? 135 : 110
+    ideal = dpi / target
+    # Quarter steps from 1 to 3 whose scaled mode is whole pixels: s = q/4
+    # divides px when px*4 is a multiple of q.
+    best = 1
+    bestd = 99
+    for (q = 4; q <= 12; q++) {
+      if ((px * 4) % q || (py * 4) % q) continue
+      d = q / 4 - ideal
+      if (d < 0) d = -d
+      if (d < bestd) { best = q / 4; bestd = d }
+    }
+    print (best < 1.2) ? 1 : best
+  }'
+}
+
+rules=""
+for dir in "$drm"/card*-*/; do
+  [[ -f $dir/status && $(<"$dir/status") == connected ]] || continue
+  connector=$(basename "$dir" | sed 's/^card[0-9]*-//')
+  override=$(awk -v c="$connector" '$1 == c { v = $2 } END { print v }' "$overrides" 2>/dev/null || true)
+  if [[ $override =~ ^[0-9]+(\.[0-9]+)?$ ]] && awk -v s="$override" 'BEGIN { exit !(s >= 0.5 && s <= 4) }'; then
+    value=$override
+  else
+    read -r w h < <(od -An -tu1 -j21 -N2 "$dir/edid" 2>/dev/null || echo "0 0")
+    mode=$(head -n1 "$dir/modes" 2>/dev/null || true)
+    [[ $mode =~ ^([0-9]+)x([0-9]+) ]] || continue
+    mw=${BASH_REMATCH[1]} mh=${BASH_REMATCH[2]}
+    builtin=0
+    [[ $connector =~ ^(eDP|LVDS|DSI) ]] && builtin=1
+    value=$(scale "${w:-0}" "${h:-0}" "$mw" "$mh" "$builtin")
+  fi
+  rules+="monitor_rule=name:^${connector}\$,scale:${value}"$'\n'
+done
+
+content="# Written by stack-os-scale from each monitor's physical size; do not edit.
+# Override a monitor in ${overrides}: <connector> <scale>
+${rules}"
+
+# Rewrite only on change: Mango reloads the file whenever it changes.
+if [[ ! -f $out || $(<"$out")$'\n' != "$content" ]]; then
+  mkdir -p "$(dirname "$out")"
+  printf '%s' "$content" >"$out.tmp"
+  mv "$out.tmp" "$out"
+fi

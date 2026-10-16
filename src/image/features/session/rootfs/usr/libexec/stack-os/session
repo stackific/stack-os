@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+# The Stack OS session, started by greetd through stack-os.desktop: computes
+# each monitor's scale first (decision 04), so Mango's first frame is already
+# at the right size, then becomes Mango with the image's own config. The
+# scale script comes from the image's `scale` feature; a scale failure never
+# blocks the login.
+/usr/libexec/stack-os/stack-os-scale || true
+exec mango -c /usr/share/stack-os/mango/config.conf
