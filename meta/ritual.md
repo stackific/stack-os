@@ -10,36 +10,39 @@ Expectations are written *before* the prompt runs: what the result must do and m
 
 ## Working software first
 
-A step is done when its "done when" items in its milestone file (`meta/milestones/`) pass, not when every edge case is handled. Edge cases found along the way go in the entry's Follow-ups, not into the current change. A prompt that asks for the simplest working version beats one that asks for completeness; the record is cleaner and the expectations are easier to check.
+A step is done when its "done when" items in its milestone file (`meta/milestones/NNN-slug/README.md`) pass, not when every edge case is handled. Edge cases found along the way go in the entry's Follow-ups, not into the current change. A prompt that asks for the simplest working version beats one that asks for completeness; the record is cleaner and the expectations are easier to check.
 
 ## One unit of work = one entry
 
 An entry covers one task (a milestone step or a bug fix), not one prompt. A task usually takes several prompts; they are all listed in order.
 
-Entries live in `docs/src/content/docs/how-it-was-made/` as `<n>-slug.md`, where `<n>` is a sequential counter: the next unused integer (e.g. `3-stack-update.md`). Neither the file name nor the title carries the step ID; the entry's first line does (`Step: M1.3`). The step ID is the thread a reader follows: docs entry, branch, commits and PR all carry it. See `meta/operator-guide.md`.
+Entries live in `docs/src/content/docs/how-it-was-made/`, nested like the work: one folder per milestone, one page per step. A step's entry is `NNN-slug/<n>-slug.md`, where `NNN-slug` matches the milestone's folder in `meta/milestones/` and `<n>` is the step's number within its milestone (e.g. `001-minimal-desktop/3-power-menu.md`). Each milestone folder starts with an `index.md` overview (goal, scope and "done when" in reader terms, sidebar label `Overview`) and is a sidebar group in `docs/astro.config.mjs` labelled `<N>-Title` (milestone number without zero padding, e.g. `1-Minimal desktop`), added when the milestone is planned. Neither the file name nor the title carries the step ID; the entry's first line, right before `## Goal`, does: `NNN-NN: <few-word summary>` (milestone and step, zero-padded, e.g. `001-03: power menu in the bar`), plain text in the step's own commit; the next step's commit turns the whole line into a link to it (a commit cannot link itself). No agent, model or other AI attribution in the entry. The step ID is the thread a reader follows: docs entry, branch, commits and PR all carry it. See `meta/operator-guide.md`.
+
+A milestone's decisions are listed, with link and status, only in its `meta/milestones/NNN-slug/README.md`; `meta/milestones/README.md` keeps the Status block and the milestone index.
 
 Readers see the docs site, the closed PRs and the commits; they never see `meta/`. So an entry must stand on its own: say in plain words what a spec required instead of only linking it.
 
 ## Steps
 
 1. **Open the entry first.** Create `<n>-slug.md` with the goal, expectations and the planned first prompt. Doing this before the prompt stops the record from being written from memory afterwards.
-2. **Run the prompt** in Claude Code (or another agent; name it in the entry).
+2. **Run the prompt** in an agent (never named in the entry).
 3. **Review the result.** Read the diff. If it's wrong, send a correction; it is folded into the entry's consolidated prompt when the entry is closed. Never silently fix by hand what the agent got wrong; if you must, record the manual change.
-4. **Verify.** Run the task's "done when" check from its milestone file in `meta/milestones/`. Record the command and result.
-5. **Close the entry.** Consolidate the prompt, write the Outcome, fill in Deviations and Follow-ups.
-6. **Commit** with the step ID as the subject prefix (`M1.3: ...`), signed and signed off. One entry can span several commits. Link the PR in the entry before merging.
+4. **Verify.** Run the task's "done when" check from its milestone file in `meta/milestones/NNN-slug/`. Record the command and result, and tick each verified "done when" item in that file.
+5. **Close the entry.** Consolidate the prompt, write the Outcome, fill in Deviations and Follow-ups. Before moving to the next step, every step adds a screenshot of its result to the Outcome, next to the text: saved as `docs/src/assets/how-it-was-made/NNN-slug/<n>-slug.png` and embedded with a relative link (shell steps capture it with `task dev:screenshot`).
+6. **Review.** Stage the change and run two passes: the `reviewer` agent (`.claude/agents/reviewer.md`) for the project's rules, the step's expectations and the accepted decisions, and the built-in `/code-review` for bugs. Fix each finding or move it to Follow-ups with a reason, then add one line to the entry's Result: `Review: N fixed, N deferred.` No commit while a `high` finding is open.
+7. **Commit** one commit per step, with the entry's first line as the subject (`001-03: power menu in the bar`) and the entry's URL as the last body line before the trailers (`https://stack-os.org/how-it-was-made/NNN-slug/<n>-slug/`, e.g. `https://stack-os.org/how-it-was-made/001-minimal-desktop/1-dev-environment/`), signed and signed off, on the milestone's branch (`m1-minimal-desktop`). Each milestone has one PR, titled `NNN: Title` (`001: Minimal desktop`), whose description lists the steps by their `NNN-NN` lines,, opened with its first step's commit and merged when its last step is in; it may also hold extra commits (review fixes, chores), but a step's own work is exactly one commit. That commit also does the previous step's bookkeeping: links its entry's first line to its commit, ticks it in the milestone file with the short hash, and updates the Status block. The last step of a milestone gets this in the next milestone's first commit.
 
 ## Entry template
 
 ```markdown
 ---
-title: 3-Stack update     # <n>-Title
+title: 3-Power menu       # <n>-Title
 description: One line.
 sidebar:
-  order: 3              # the entry's counter <n>
+  order: 3              # the step number <n>
 ---
 
-Step: M1.3 · PR: #NN · Agent: Claude Code (model)
+[001-03: power menu in the bar](https://github.com/stackific/stack-os/commit/<sha>)
 
 ## Goal
 What this step was meant to produce, and which milestone item it serves.
@@ -68,6 +71,8 @@ single coherent ask. A reader should be able to send it as-is.
 
 ## Outcome
 One coherent response to that prompt: what was built and how it meets the expectations.
+
+![What the step produced](../../../../assets/how-it-was-made/001-minimal-desktop/3-power-menu.png)
 
 ## Manual changes
 Anything done by hand, and why the agent didn't do it.

@@ -1,6 +1,6 @@
 # The `stack` command
 
-Specification for Stack Linux's maintenance command. Stack Linux (stack-os.org) is the Fedora bootc desktop that this repository builds. The command replaces the `terra` Taskfile wrapper in `features/cli`.
+Specification for Stack OS's maintenance command. Stack OS (stack-os.org) is the Fedora bootc desktop that this repository builds. The command replaces the `terra` Taskfile wrapper in `features/cli`.
 
 Status: draft for review. Nothing here is implemented yet. Open decisions are listed at the end.
 
@@ -17,27 +17,27 @@ Status: draft for review. Nothing here is implemented yet. Open decisions are li
 | Item | Value |
 |---|---|
 | Command | `/usr/bin/stack` |
-| Short alias | `sl`, as a shell alias in `/etc/profile.d/stack.sh` (not a file in `/usr/bin`: Fedora's `sl` package, the steam locomotive joke, owns that name and would conflict) |
-| Images | `ghcr.io/<owner>/stack` and `ghcr.io/<owner>/stack-nvidia` |
+| Short alias | `sl`, as a shell alias in `/etc/profile.d/stack-os.sh` (not a file in `/usr/bin`: Fedora's `sl` package, the steam locomotive joke, owns that name and would conflict) |
+| Images | `ghcr.io/stackific/stack-os` and `ghcr.io/stackific/stack-os-nvidia` |
 | Tags | `latest`, `44`, and `44.<YYYYMMDD>` per build; `44.<YYYYMMDD>.<n>` when a day has more than one build |
-| Shipped data | `/usr/share/stack/` (release metadata, the public signing key, completions) |
-| System state | `/var/lib/stack/` (last update check, cached version list, settings the user changed) |
-| Admin config | `/etc/stack/stack.toml` (optional overrides: registry, channel, timers) |
-| Systemd units | `stack-update.timer` / `.service`, `stack-flatpak-update.timer` / `.service` |
+| Shipped data | `/usr/share/stack-os/` (release metadata, the public signing key, completions) |
+| System state | `/var/lib/stack-os/` (last update check, cached version list, settings the user changed) |
+| Admin config | `/etc/stack-os/stack.toml` (optional overrides: registry, channel, timers) |
+| Systemd units | `stack-os-update.timer` / `.service`, `stack-os-flatpak-update.timer` / `.service` |
 | Environment | `STACK_REGISTRY` overrides the registry for testing |
 
-The image carries `/usr/share/stack/release.json`:
+The image carries `/usr/share/stack-os/release.json`:
 
 ```json
 {
-  "name": "Stack Linux",
+  "name": "Stack OS",
   "version": "44.20261015",
   "variant": "base",
   "fedora": "44",
-  "image": "ghcr.io/<owner>/stack",
+  "image": "ghcr.io/stackific/stack-os",
   "built": "2026-10-15T20:48:56Z",
   "commit": "88edfb0",
-  "changelog_url": "https://github.com/<owner>/stack/releases/tag/44.20261015"
+  "changelog_url": "https://github.com/stackific/stack-os/releases/tag/44.20261015"
 }
 ```
 
@@ -72,7 +72,7 @@ Stages the next image, updates Flatpak apps, and reports what changed.
 - `--check`: only reports whether a newer version exists and prints its changelog. Downloads nothing.
 - `--reboot`: reboots when the update is staged, after a 10-second countdown that Ctrl+C cancels.
 - The last line is one of: `Nothing to do.`, `Update staged: 44.20261016. Reboot to finish.`, or the error.
-- The daily timer runs exactly this command (without `--firmware`) and sends a desktop notification to active sessions when something was staged: "Stack Linux 44.20261016 is ready. Restart to finish."
+- The daily timer runs exactly this command (without `--firmware`) and sends a desktop notification to active sessions when something was staged: "Stack OS 44.20261016 is ready. Restart to finish."
 
 ### `stack rollback`
 
@@ -80,11 +80,11 @@ Boots the previous version at the next reboot (`bootc rollback`). Prints which v
 
 ### `stack versions`
 
-Lists published versions of the running image's variant, newest first, from the registry (`skopeo list-tags`, cached in `/var/lib/stack/versions.json` for an hour). Marks the running, staged, previous, and pinned versions. With `--changelog`, prints each version's changelog summary. Needs the network for anything beyond what is cached.
+Lists published versions of the running image's variant, newest first, from the registry (`skopeo list-tags`, cached in `/var/lib/stack-os/versions.json` for an hour). Marks the running, staged, previous, and pinned versions. With `--changelog`, prints each version's changelog summary. Needs the network for anything beyond what is cached.
 
 ### `stack revert <version>`
 
-Switches the machine to an older published version: `bootc switch ghcr.io/<owner>/stack:44.20261010` (or `rpm-ostree rebase` when packages are layered). The image is downloaded, staged, and takes effect at the next reboot.
+Switches the machine to an older published version: `bootc switch ghcr.io/stackific/stack-os:44.20261010` (or `rpm-ostree rebase` when packages are layered). The image is downloaded, staged, and takes effect at the next reboot.
 
 The command states two consequences before asking for confirmation:
 
@@ -119,7 +119,7 @@ Before layering the first RPM on a machine, the command explains once that layer
 
 ### `stack remove <name>...`
 
-The inverse: `flatpak uninstall` or `rpm-ostree uninstall`, chosen by looking at what is installed. Refuses to remove packages that are part of the image ("`thunar` is part of Stack Linux; it cannot be removed, only hidden from the launcher") and points at `stack search` for alternatives.
+The inverse: `flatpak uninstall` or `rpm-ostree uninstall`, chosen by looking at what is installed. Refuses to remove packages that are part of the image ("`thunar` is part of Stack OS; it cannot be removed, only hidden from the launcher") and points at `stack search` for alternatives.
 
 ### `stack search <term>`
 
@@ -152,7 +152,7 @@ Runs checks and prints a report suitable for pasting into a bug report. Each che
 
 ### `stack version`
 
-Prints the command's version and the release metadata in one line: `stack 1.0.0 (Stack Linux 44.20261015, base)`.
+Prints the command's version and the release metadata in one line: `stack 1.0.0 (Stack OS 44.20261015, base)`.
 
 ### `stack help [command]`
 
@@ -196,6 +196,6 @@ Help text. Each command's help ends with what it runs underneath, so advanced us
 1. Go or Python for the implementation (Go recommended above).
 2. Keep `go-task` and the `task` command in the image for users once `stack` no longer needs it?
 3. How many pins to allow (three proposed) and how much disk a pin may use.
-4. Registry owner and image names once the GitHub organization is created (`ghcr.io/<owner>/stack`).
+4. ~~Registry owner and image names.~~ Settled: `ghcr.io/stackific/stack-os`, with `stack-os` as the name for every system path and unit.
 5. Whether `stack update` should include firmware by default on laptops that are plugged in, or stay opt-in.
 6. Whether the daily timer should also run `stack doctor` and notify on FAIL lines.

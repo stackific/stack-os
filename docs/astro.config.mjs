@@ -17,19 +17,20 @@ export default defineConfig({
       ],
       sidebar: [
         {
-          label: 'Guides',
-          items: [
-            // Each item here is one entry in the navigation menu.
-            { label: 'Example Guide', slug: 'guides/example' },
-          ],
-        },
-        {
           label: 'How it was made',
-          items: [{ autogenerate: { directory: 'how-it-was-made' } }],
-        },
-        {
-          label: 'Reference',
-          items: [{ autogenerate: { directory: 'reference' } }],
+          items: [
+            { slug: 'how-it-was-made' },
+            {
+              label: '1-Minimal desktop',
+              items: [
+                {
+                  autogenerate: {
+                    directory: 'how-it-was-made/001-minimal-desktop',
+                  },
+                },
+              ],
+            },
+          ],
         },
       ],
     }),

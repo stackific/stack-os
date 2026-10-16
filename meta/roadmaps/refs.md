@@ -2,7 +2,7 @@
 
 Third-party code to clone into `references/` (gitignored) and index with cocoindex-code. The goal is an Omarchy alternative on Fedora bootc: Mango, Quickshell, a plugin layer like Omarchy's, and wallpaper-derived colors across every app.
 
-The list is organized by what Omarchy ships, from a scan of `references/omarchy-quattro` (530 `bin/` commands, 17 shell plugins, 20 theme templates, 23 themes, 41 hardware scripts, 14 docs, and `omarchy-pkgs` with about 200 PKGBUILDs). Each section names Omarchy's own implementation first, then the upstream projects to study or ship. "Fedora" notes whether a package exists in Fedora, RPM Fusion, or Terra, since the image installs RPMs.
+The list is organized by what Omarchy ships, from a scan of `omarchy-quattro` (530 `bin/` commands, 17 shell plugins, 20 theme templates, 23 themes, 41 hardware scripts, 14 docs, and `omarchy-pkgs` with about 200 PKGBUILDs). Each section names Omarchy's own implementation first, then the upstream projects to study or ship. "Fedora" notes whether a package exists in Fedora, RPM Fusion, or Terra, since the image installs RPMs.
 
 Checked on 2026-10-16: none archived unless marked. Check each license before copying code; DankMaterialShell changed its license in late 2025, and the Omarchy apps are MIT unless noted.
 

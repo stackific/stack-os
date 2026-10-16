@@ -6,6 +6,10 @@ includes:
     taskfile: ./docs/Taskfile.yml
     dir: ./docs
   index: ./taskfiles/index.yml
+  # Not called by setup: the prototypes need system toolchains setup does not install.
+  proto:
+    taskfile: ./meta/prototypes/Taskfile.yml
+    dir: ./meta/prototypes
 
 tasks:
   default:

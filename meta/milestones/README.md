@@ -1,35 +1,16 @@
 # Milestones
 
-Milestones are rolling: one file per milestone, `mN-slug.md`, added as the roadmap grows. Each has a "done when" list. Nothing from a later milestone starts until the current one's list is green, except documentation. Every item becomes one or more "How it was made" entries (see `../ritual.md`).
+Milestones are rolling, added as the roadmap grows. One folder per milestone, `NNN-slug/`: its `README.md` (from `../templates/milestone.md`) and its decisions as `NN-slug.md` (from `../templates/decision.md`), numbered within the milestone like its steps. Each milestone has a "done when" list; every step becomes one or more "How it was made" entries (see `../ritual.md`). Step IDs: `M1-3`. Each milestone's decisions are listed, with link and status, in its own `README.md`, not here. A decision is changed by adding a new record that supersedes the old one, never by editing history.
 
 ## Status
 
-Milestone: M1 (planned, draft)
+Milestone: M1 (planned, approved)
 Step: none
 Open PRs: #1
-Pending decisions: 0001 image layout, 0002 greeter, 0003 lock screen
-Next: approve the M1 steps, then draft decision 0001
+Next: `next step` to start M1-1 (dev environment)
 
-## Index
+## Milestones
 
 | Milestone | Title | State |
 |---|---|---|
-| [M1](m1-minimal-desktop.md) | Minimal desktop | planned |
-
-Template for `mN-slug.md`:
-
-```markdown
-# MN: Title
-
-One line on what the milestone proves.
-
-Scope: what is in and out.
-
-Done when:
-
-- [ ] an observable check a reader can run
-
-Steps:
-
-- [ ] MN.1: step title (decision NNNN)
-```
+| [M1](001-minimal-desktop/README.md) | Minimal desktop | planned |
