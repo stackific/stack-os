@@ -8,6 +8,8 @@ jspm_packages/
 # Build output
 dist/
 build/
+# The image's build Taskfile and helpers are source, not output.
+!src/image/build/
 out/
 *.tsbuildinfo
 

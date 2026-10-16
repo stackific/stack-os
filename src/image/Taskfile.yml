@@ -1,0 +1,52 @@
+version: "3"
+
+# Builds and checks the Stack OS bootc image (decision 01). The Containerfile
+# and the features it runs live in this folder; the build context is src/, so
+# the image can copy the shell and the lock's PAM file, and output/rpms/ is
+# passed as the extra context `rpms` for the Quickshell RPM.
+#
+# Building the minimal root filesystem needs these podman options (as Fedora's
+# custom base image docs and the proof of concept use): all capabilities, the
+# container_runtime_t SELinux label and /dev/fuse.
+vars:
+  IMAGE: localhost/stack-os:latest
+
+tasks:
+  install:
+    desc: Check the tools the image build needs on the host
+    preconditions:
+      - sh: command -v podman
+        msg: Install podman first
+
+  build:
+    desc: Build the Stack OS image as localhost/stack-os:latest
+    deps: [install]
+    preconditions:
+      # Decision 01: the build fails if the base image is not pinned by digest.
+      - sh: echo "{{.BOOTC_IMAGE}}" | grep -q '@sha256:'
+        msg: Pin bootc_image by digest in versions.yml
+    cmds:
+      - task: :quickshell:rpm
+      - >-
+        podman build
+        --cap-add=all --security-opt=label=type:container_runtime_t --device /dev/fuse
+        -f "{{.TASKFILE_DIR}}/Containerfile"
+        --build-arg BOOTC_IMAGE="{{.BOOTC_IMAGE}}"
+        --build-arg QUICKSHELL_KEY="{{.QUICKSHELL_KEY}}"
+        --build-context rpms="{{.ROOT_DIR}}/output/rpms"
+        -t "{{.IMAGE}}"
+        "{{.ROOT_DIR}}/src"
+
+  check:
+    desc: Run every feature's check inside the built image
+    deps: [install]
+    preconditions:
+      - sh: podman image exists "{{.IMAGE}}"
+        msg: Run `task image:build` first
+    cmds:
+      - >-
+        podman run --rm --security-opt label=disable
+        -v "{{.ROOT_DIR}}/src:/ctx:ro"
+        -e PATH=/ctx/image/build/bin:/usr/bin:/usr/sbin
+        "{{.IMAGE}}"
+        go-task -d /ctx/image/build check

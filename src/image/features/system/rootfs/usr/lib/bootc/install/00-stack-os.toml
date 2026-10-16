@@ -1,0 +1,4 @@
+# Default root filesystem for `bootc install` and the installers built on it
+# (decision 01): Btrfs.
+[install.filesystem.root]
+type = "btrfs"

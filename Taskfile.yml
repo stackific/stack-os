@@ -13,6 +13,8 @@ env:
 vars:
   TOOLBOX_IMAGE:
     sh: 'sed -n "s/^toolbox_image: *//p" versions.yml'
+  BOOTC_IMAGE:
+    sh: 'sed -n "s/^bootc_image: *//p" versions.yml'
   QUICKSHELL_GIT:
     sh: 'sed -n "s/^quickshell_git: *//p" versions.yml'
   QUICKSHELL_TAG:
@@ -37,6 +39,9 @@ includes:
   quickshell:
     taskfile: ./src/quickshell/Taskfile.yml
     dir: ./src/quickshell
+  image:
+    taskfile: ./src/image/Taskfile.yml
+    dir: ./src/image
   host: ./taskfiles/host.yml
   index: ./taskfiles/index.yml
 
@@ -56,6 +61,7 @@ tasks:
       - task: docs:install
       # Reaches quickshell:install and dev:install through its dependencies.
       - task: dev:setup
+      - task: image:install
 
   lint:
     desc: Run every pre-commit check on all files

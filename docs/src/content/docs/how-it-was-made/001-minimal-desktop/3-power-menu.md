@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-001-03: power menu with the shell's own lock
+[001-03: power menu with the shell's own lock](https://github.com/stackific/stack-os/commit/92c6d28f9517097359b6c55c511de77653a62e00)
 
 ## Goal
 

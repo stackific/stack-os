@@ -1,0 +1,58 @@
+version: "3"
+
+# Runs inside the image build (see ../Containerfile), with build/bin on PATH.
+# `all` installs every feature in order, `finalize` is the last step of the
+# build, and `check` asserts each feature inside a built image
+# (`task image:check`). Each feature is a folder under ../features/ with a
+# `packages` list and a Taskfile with `install` and `check`.
+includes:
+  repos: { taskfile: ../features/repos, dir: ../features/repos }
+  system: { taskfile: ../features/system, dir: ../features/system }
+  desktop: { taskfile: ../features/desktop, dir: ../features/desktop }
+  shell: { taskfile: ../features/shell, dir: ../features/shell }
+
+tasks:
+  all:
+    desc: Install every feature, in order
+    cmds:
+      # Repositories first: the others install with updates-archive enabled.
+      - task: repos:install
+      - task: system:install
+      - task: desktop:install
+      - task: shell:install
+
+  check:
+    desc: Assert every feature in a built image
+    cmds:
+      - task: repos:check
+      - task: system:check
+      - task: desktop:check
+      - task: shell:check
+
+  # The last step of every build (adapted from
+  # terra-fedora/build/Taskfile.yml:127-151), in its own RUN without the dnf
+  # cache mount (see ../Containerfile).
+  finalize:
+    desc: Disable Terra, rebuild the initramfs, empty /var, /tmp and /run, lint
+    cmds:
+      # Terra keeps its key and repo file but is switched off: the shipped
+      # system only ever installs from Fedora (decision 01).
+      - sed -Ei 's/^enabled[[:space:]]*=.*/enabled=0/' /etc/yum.repos.d/terra*.repo
+      # One initramfs per installed kernel, generic (no host-only), so it boots
+      # on any machine. dracut copies /root, which links to /var/roothome, a
+      # directory only a booted system has, so it is created first.
+      - mkdir -p /var/roothome
+      - |
+        for dir in /usr/lib/modules/*/; do
+          kver=$(basename "$dir")
+          DRACUT_NO_XATTR=1 dracut -f --no-hostonly "$dir/initramfs.img" "$kver"
+          chmod 0600 "$dir/initramfs.img"
+        done
+      - dnf clean all
+      # bootc copies /var to a new system once and never again, so the image
+      # ships it empty; tmpfiles.d recreates what a feature needs. /tmp and
+      # /run are filled by package scripts during the build and are cleared.
+      - find /var -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+      - rm -rf /tmp/*
+      - find /run -xdev -mindepth 1 -depth -delete 2>/dev/null || true
+      - bootc container lint --fatal-warnings

@@ -5,9 +5,9 @@ Milestones are rolling, added as the roadmap grows. One folder per milestone, `N
 ## Status
 
 Milestone: M1 (planned, approved)
-Step: 001-03 (power menu) done on branch `m1-minimal-desktop`; 001-02 is b15b840
+Step: 001-04 (image skeleton) done on branch `m1-minimal-desktop`; 001-03 is 92c6d28
 Open PRs: #2 (001: Minimal desktop)
-Next: 001-04 (image skeleton)
+Next: 001-05 (login manager into Mango)
 
 ## Milestones
 

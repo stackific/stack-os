@@ -1,0 +1,24 @@
+version: "3"
+
+# Package sources. Fedora's updates-archive (from fedora-repos-archive) keeps
+# every update that reached stable, so versions the image pins stay
+# installable; Terra (Fyra Labs) is the only third-party repository and ships
+# Mango. terra-release carries Terra's signing key, so only its own install
+# skips the GPG check and everything after is verified. finalize turns Terra
+# off again.
+tasks:
+  install:
+    cmds:
+      - dnf -y install --setopt=install_weak_deps=False fedora-repos-archive
+      - >-
+        dnf -y install --setopt=install_weak_deps=False --nogpgcheck
+        --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever'
+        terra-release
+
+  check:
+    cmds:
+      - check-packages
+      # Only Fedora's own repositories may be enabled in the shipped image.
+      - |
+        bad=$(dnf repolist --enabled | awk 'NR > 1 { print $1 }' | grep -vE '^(fedora|updates)(-|$)' || true)
+        [ -z "$bad" ] || { echo "third-party repo enabled: $bad"; exit 1; }

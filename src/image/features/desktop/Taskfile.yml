@@ -1,0 +1,21 @@
+version: "3"
+
+# The graphical session's programs: Mango (from Terra), the foot terminal, a
+# font for both, and Mesa, the only graphics driver (no NVIDIA or other
+# vendor driver packages, per the milestone).
+tasks:
+  install:
+    cmds:
+      - install-packages
+
+  check:
+    cmds:
+      - check-packages
+      - |
+        # Any NVIDIA package (RPM Fusion's or Terra's names) or kernel module
+        # package means a vendor driver slipped in; kmod and kmod-libs are the
+        # module tools every system has.
+        if rpm -qa | grep -iE 'nvidia|akmod|^kmod-' | grep -vE '^kmod(-libs)?-[0-9]'; then
+          echo "GPU driver beyond Mesa installed"
+          exit 1
+        fi

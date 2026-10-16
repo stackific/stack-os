@@ -1,0 +1,3 @@
+# package | source | function
+fedora-repos-archive | fedora | Fedora's updates-archive repository, so pinned versions stay installable
+terra-release | terra | Terra repository (Mango), disabled at the end of the build
