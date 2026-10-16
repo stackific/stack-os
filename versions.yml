@@ -15,6 +15,14 @@ bootc_image: quay.io/fedora/fedora-bootc:44@sha256:9db34195bc0b6be43e17c20ca840b
 # installer ISO (decision 01).
 bib_image: quay.io/centos-bootc/bootc-image-builder@sha256:30e7eac70b6e4448da57aaff66d6a89dbd1526572e8b77be31da129e692eb3e9
 
+# Terra's release package (its repository file) and the signing keys it
+# requires, installed in the image from these exact files; the build refuses
+# any other content.
+terra_release_url: https://repos.fyralabs.com/terra44/terra-release-0:44-10.noarch.rpm
+terra_release_sha256: dffee51fbc810aa015a96648d17c29388d5926828d2c174d55ca538b4f675227
+terra_gpg_keys_url: https://repos.fyralabs.com/terra44/terra-gpg-keys-0:44-6.noarch.rpm
+terra_gpg_keys_sha256: 6b2c8131e4616bf4e4b21bc2191718bac363e21c08ab991d992e23acfe57f49f
+
 # Quickshell, built from source by `task quickshell:rpm` (decision 05). The build
 # fails if the tag no longer points at this commit.
 quickshell_git: https://git.outfoxxed.me/quickshell/quickshell.git

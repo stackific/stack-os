@@ -37,5 +37,5 @@ Steps:
 - [x] 5 (4860587): login manager into Mango (decision 02)
 - [x] 6 (0e80201): display scale from physical DPI, `task scale:test` (decision 04)
 - [x] 7 (d3e6cd5): VM boot test on a Btrfs root (boot not yet run; needs sudo): `task vm:disk`, `task vm:boot`, `task vm:run` (QEMU with KVM)
-- [ ] 8: installer ISO that installs to Btrfs: `task iso`, `task vm:installer`
-- [ ] 9: lock every package: `task lock`, `rootfs.lock`, `image.lock`, versionlock in the build, `image:check` fails on any difference, Fedora's `go-task` pinned, `terra-release` installed from a checksum-pinned RPM instead of without a GPG check (decision 01)
+- [x] 8 (d966536): installer ISO that installs to Btrfs (ISO not yet built; needs sudo): `task iso`, `task vm:installer`
+- [ ] 9: lock every package: `task image:lock`, `rootfs.lock`, `image.lock`, versionlock in the build, `image:check` fails on any difference, Fedora's `go-task` pinned, `terra-release` installed from a checksum-pinned RPM instead of without a GPG check (decision 01)

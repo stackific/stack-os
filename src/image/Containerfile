@@ -2,29 +2,55 @@
 # src/ as the build context and output/rpms/ as the extra context `rpms`.
 #
 #   rootfs   Fedora's bootc image, used only as the tool that assembles the
-#            minimal root filesystem (`build-rootfs --manifest=minimal`).
+#            minimal root filesystem (`build-rootfs --manifest=minimal`),
+#            with every package of image/rootfs.lock at its locked version.
 #   minimal  That root filesystem on its own: the base of the image.
 #   image    Fedora's go-task, one RUN that installs every feature in order
-#            (image/build/Taskfile.yml), then a RUN that finalizes. Nothing is
+#            (image/build/Taskfile.yml) under dnf's versionlock for every
+#            entry of image/image.lock, then a RUN that finalizes. Nothing is
 #            compiled: the Quickshell RPM comes from `task quickshell:rpm`.
+#
+# Without lock files (the first build) everything runs unlocked, so
+# `task image:lock` can write them (decision 01). Fedora's updates-archive is
+# enabled for every install and for the versionlock, so locked versions stay
+# downloadable.
 ARG BOOTC_IMAGE
 
 FROM ${BOOTC_IMAGE} AS rootfs
-RUN /usr/libexec/bootc-base-imagectl build-rootfs --manifest=minimal /target-rootfs
+RUN --mount=type=bind,source=image,target=/ctx-image \
+  dnf -y install --setopt=install_weak_deps=False fedora-repos-archive \
+  && locks=() \
+  && if [ -s /ctx-image/rootfs.lock ]; then \
+    while read -r nevra; do locks+=(--lock "$nevra"); done </ctx-image/rootfs.lock; \
+  fi \
+  && /usr/libexec/bootc-base-imagectl build-rootfs --manifest=minimal \
+    --repo fedora --repo updates --repo updates-archive "${locks[@]}" /target-rootfs
 
 FROM scratch AS minimal
 COPY --from=rootfs /target-rootfs/ /
 
 FROM minimal AS image
-# Key of the Quickshell RPM to install, from the root Taskfile.
+# Key of the Quickshell RPM to install, and the pinned Terra release package,
+# from the root Taskfile (versions.yml).
 ARG QUICKSHELL_KEY
-RUN dnf -y install --setopt=install_weak_deps=False go-task && dnf clean all
+ARG TERRA_RELEASE_URL
+ARG TERRA_RELEASE_SHA256
+ARG TERRA_GPG_KEYS_URL
+ARG TERRA_GPG_KEYS_SHA256
+# go-task runs the build, so it comes first, at its locked version
+# (updates-archive's repository file is already in the minimal rootfs).
+RUN --mount=type=bind,source=image,target=/ctx-image \
+  go_task=$(grep -m1 '^go-task-[0-9]' /ctx-image/image.lock 2>/dev/null || echo go-task) \
+  && dnf -y install --setopt=install_weak_deps=False --enablerepo=updates-archive "$go_task" \
+  && dnf clean all
 # src/ is mounted at /ctx (read-only) and output/rpms/ at /rpms; the dnf cache
 # persists between builds. build/bin holds the feature helpers.
 RUN --mount=type=bind,source=.,target=/ctx \
   --mount=type=bind,from=rpms,target=/rpms \
   --mount=type=cache,target=/var/cache/libdnf5,sharing=locked \
   env PATH=/ctx/image/build/bin:/usr/bin:/usr/sbin QUICKSHELL_RPM="/rpms/quickshell-${QUICKSHELL_KEY}.rpm" \
+  TERRA_RELEASE_URL="${TERRA_RELEASE_URL}" TERRA_RELEASE_SHA256="${TERRA_RELEASE_SHA256}" \
+  TERRA_GPG_KEYS_URL="${TERRA_GPG_KEYS_URL}" TERRA_GPG_KEYS_SHA256="${TERRA_GPG_KEYS_SHA256}" \
   go-task -d /ctx/image/build all
 # finalize runs without the dnf cache mount, so no mount point is left in
 # /var for `bootc container lint` to flag.

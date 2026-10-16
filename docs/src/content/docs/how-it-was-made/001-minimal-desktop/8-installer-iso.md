@@ -5,7 +5,7 @@ sidebar:
   order: 8
 ---
 
-001-08: installer ISO that installs to Btrfs
+[001-08: installer ISO that installs to Btrfs](https://github.com/stackific/stack-os/commit/d966536359a22fbdfc0bd90f644706573db4566c)
 
 ## Goal
 

@@ -33,6 +33,10 @@ tasks:
         -f "{{.TASKFILE_DIR}}/Containerfile"
         --build-arg BOOTC_IMAGE="{{.BOOTC_IMAGE}}"
         --build-arg QUICKSHELL_KEY="{{.QUICKSHELL_KEY}}"
+        --build-arg TERRA_RELEASE_URL="{{.TERRA_RELEASE_URL}}"
+        --build-arg TERRA_RELEASE_SHA256="{{.TERRA_RELEASE_SHA256}}"
+        --build-arg TERRA_GPG_KEYS_URL="{{.TERRA_GPG_KEYS_URL}}"
+        --build-arg TERRA_GPG_KEYS_SHA256="{{.TERRA_GPG_KEYS_SHA256}}"
         --build-context rpms="{{.ROOT_DIR}}/output/rpms"
         -t "{{.IMAGE}}"
         "{{.ROOT_DIR}}/src"
@@ -50,3 +54,29 @@ tasks:
         -e PATH=/ctx/image/build/bin:/usr/bin:/usr/sbin
         "{{.IMAGE}}"
         go-task -d /ctx/image/build check
+
+  # Writes the lock files from what the build installed (decision 01): the
+  # minimal stage's packages to rootfs.lock, the image's to image.lock. A
+  # locked build reproduces the old locks, so to update them, delete both
+  # files, run `task image:build` (unlocked), then this task, then rebuild and
+  # commit both files.
+  lock:
+    desc: Write rootfs.lock and image.lock from the built image (to update, delete them and rebuild first)
+    deps: [install]
+    preconditions:
+      - sh: podman image exists "{{.IMAGE}}"
+        msg: Run `task image:build` first
+    vars:
+      QUERY: "%{NAME}-%{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\\n"
+    cmds:
+      - >-
+        podman build
+        --cap-add=all --security-opt=label=type:container_runtime_t --device /dev/fuse
+        -f "{{.TASKFILE_DIR}}/Containerfile" --target minimal
+        --build-arg BOOTC_IMAGE="{{.BOOTC_IMAGE}}"
+        -t localhost/stack-os-minimal:latest
+        "{{.ROOT_DIR}}/src"
+      - podman run --rm localhost/stack-os-minimal:latest rpm -qa --qf '{{.QUERY}}' | grep -v '^gpg-pubkey-' | LC_ALL=C sort >"{{.TASKFILE_DIR}}/rootfs.lock"
+      - podman run --rm "{{.IMAGE}}" rpm -qa --qf '{{.QUERY}}' | grep -v '^gpg-pubkey-' | LC_ALL=C sort >"{{.TASKFILE_DIR}}/image.lock"
+      - podman rmi localhost/stack-os-minimal:latest >/dev/null
+      - wc -l "{{.TASKFILE_DIR}}/rootfs.lock" "{{.TASKFILE_DIR}}/image.lock"

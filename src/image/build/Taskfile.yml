@@ -17,17 +17,37 @@ tasks:
   all:
     desc: Install every feature, in order
     cmds:
-      # Repositories first: the others install with updates-archive enabled.
+      # Repositories first: the lock and the other features need Terra and
+      # updates-archive.
       - task: repos:install
+      - task: versionlock
       - task: system:install
       - task: desktop:install
       - task: shell:install
       - task: session:install
       - task: scale:install
 
+  # Every package of ../image.lock at its locked version while the features
+  # install (decision 01); finalize clears it. No lock file: unlocked. dnf
+  # only warns about an entry it cannot find in an enabled repository, so the
+  # output is checked: every entry must resolve. go-task is already installed
+  # at its locked version, and quickshell is the local RPM, pinned by its key.
+  versionlock:
+    status:
+      - test ! -s ../image.lock
+    cmds:
+      - |
+        out=$(grep -vE '^(go-task|quickshell)-[0-9]' ../image.lock | xargs dnf versionlock add --enablerepo=updates-archive 2>&1)
+        echo "$out" | tail -n 3
+        if echo "$out" | grep -i 'no package'; then
+          echo "image.lock has entries no repository provides; rewrite it with task image:lock" >&2
+          exit 1
+        fi
+
   check:
     desc: Assert every feature in a built image
     cmds:
+      - task: locks
       - task: repos:check
       - task: system:check
       - task: desktop:check
@@ -35,12 +55,24 @@ tasks:
       - task: session:check
       - task: scale:check
 
+  # The image's packages are exactly ../image.lock's (decision 01).
+  locks:
+    status:
+      - test ! -s ../image.lock
+    cmds:
+      - |
+        if ! diff -u ../image.lock <(rpm -qa --qf '%{NAME}-%{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\n' | grep -v '^gpg-pubkey-' | LC_ALL=C sort); then
+          echo "The image's packages differ from image.lock. After adding, removing or updating a package: delete src/image/*.lock, task image:build, task image:lock, task image:build, then commit the locks." >&2
+          exit 1
+        fi
+
   # The last step of every build (adapted from
   # terra-fedora/build/Taskfile.yml:127-151), in its own RUN without the dnf
   # cache mount (see ../Containerfile).
   finalize:
     desc: Disable Terra, rebuild the initramfs, empty /var, /tmp and /run, lint
     cmds:
+      - dnf versionlock clear
       # Terra keeps its key and repo file but is switched off: the shipped
       # system only ever installs from Fedora (decision 01).
       - sed -Ei 's/^enabled[[:space:]]*=.*/enabled=0/' /etc/yum.repos.d/terra*.repo

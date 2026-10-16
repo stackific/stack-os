@@ -5,9 +5,9 @@ Milestones are rolling, added as the roadmap grows. One folder per milestone, `N
 ## Status
 
 Milestone: M1 (planned, approved)
-Step: 001-08 (installer ISO) written, ISO not yet built (needs sudo: `task iso`) on branch `m1-minimal-desktop`; 001-07 is d3e6cd5 (boot not yet run: needs sudo)
+Step: 001-09 (lock every package) done on branch `m1-minimal-desktop`; 001-08 is d966536 (ISO not yet built: needs sudo)
 Open PRs: #2 (001: Minimal desktop)
-Next: 001-09 (lock every package)
+Next: operator verification from 001-05 (needs sudo for `task vm:disk` and `task iso`), then merge PR #2
 
 ## Milestones
 

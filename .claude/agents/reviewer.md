@@ -19,7 +19,7 @@ Check, in order:
    - Taskfiles modular: each project folder has its own `Taskfile.yml` with an `install` task, included from the root.
    - `bun`, not npm or node; Python through `uv`.
 3. **Accepted decisions** in the milestone folder. For M1 (decision 01):
-   - a package added or removed means `rootfs.lock` / `image.lock` updated by `task lock`; images by digest in `versions.yml`; Actions by commit hash;
+   - a package added or removed means `rootfs.lock` / `image.lock` updated by `task image:lock`; images by digest in `versions.yml`; Actions by commit hash;
    - static config under `/usr`; `/etc` only where a program reads nowhere else; nothing written to `/var` at build time;
    - no compiler or `-devel` package in the final image; Terra disabled at the end of the build.
    Flag any change that contradicts a decision without a new decision record.
