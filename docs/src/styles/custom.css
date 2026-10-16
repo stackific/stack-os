@@ -1,3 +1,6 @@
+/* Geist for headings; @import must be the first rule in the file. */
+@import url("https://cdn.jsdelivr.net/npm/@fontsource-variable/geist@5.3.0/index.css");
+
 /*
  * Site-wide additions to Starlight's styles.
  *
@@ -6,6 +9,46 @@
  * after it, both drawn as masks so they follow the link colour in light and
  * dark themes.
  */
+
+/*
+ * Monaspace Neon (GitHub, SIL OFL 1.1; licence beside the font in
+ * public/fonts/monaspace-neon/) for both body and code text. One variable
+ * file covers every weight (wght 200-800) and italics (slnt axis, 0 to -11
+ * degrees), so the browser downloads a single font. `swap` shows the fallback
+ * text at once instead of hiding it while the font loads.
+ */
+@font-face {
+  font-family: "Monaspace Neon";
+  src: url("/fonts/monaspace-neon/monaspace-neon-var.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
+  font-style: oblique 0deg 11deg;
+  font-display: swap;
+}
+
+:root {
+  --sl-font:
+    "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --sl-font-mono:
+    "Monaspace Neon", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Headings (page title, hero title, content headings) and card titles on the
+ * front page use Geist; body and code stay Monaspace. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.hero h1,
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
+.card .title {
+  font-family: "Geist Variable", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
 a[href^="https://github.com/stackific/stack-os/commit/"]::before,
 a[href^="https://github.com/stackific/stack-os/commit/"]::after {
   content: "";

@@ -1,34 +1,65 @@
 ---
 title: Stack OS
-description: An OS, and an AI-native framework to build your own modern, efficient OS from recorded prompts.
+description: Your OS, built by your AI from prompts you can read, fork and roll back.
 template: splash
 hero:
-  tagline: An OS, and an AI-native framework to build your own extremely modern and efficient OS without becoming an expert overnight. Tell your AI to build it with Stack OS.
+  title: Describe your OS. Your AI builds it.
+  tagline: Stack OS is a Linux desktop and a framework for making it yours. Tell your AI what you want; every change lands as a prompt, a reason and a diff you own. Nothing hidden, nothing you can't undo.
+  image:
+    file: ../../assets/how-it-was-made/001-minimal-desktop/3-power-menu.png
+    alt: The Stack OS bar with its power menu open, offering Lock, Log out, Restart and Shut down.
   actions:
-    - text: How it was made
+    - text: See how it was made
       link: /how-it-was-made/
       icon: right-arrow
-    - text: GitHub
+    - text: Star on GitHub
       link: https://github.com/stackific/stack-os
       icon: github
       variant: minimal
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-The OS you make is yours: every decision visible, portable, reversible, and rebuildable by anyone with an AI and the prompts. Apple-level finish, Omarchy-level fun, Fedora-stable, zero opinions you can't remove.
+## Prompts are the source code
+
+Other distros hand you their config. Stack OS hands you the *why*. Every change is recorded as the prompt that asked for it, the reason behind it and the exact diff it made. Paste the prompts into your own AI and you get the same OS, or your own twist on it.
 
 <CardGrid stagger>
-  <Card title="Prompts are the source" icon="pencil">
-    Every change is recorded with its prompt, its diff and its reason. Paste the prompts into your own AI to rebuild Stack OS, or vary it.
+  <Card title="Make it yours in minutes" icon="pencil">
+    Fork Stack OS, keep the prompts you like, write the ones you need. Your AI edits the blueprint, not your running machine, so every change survives reinstalls and reaches every computer you own.
   </Card>
-  <Card title="Fork it, make it yours" icon="random">
-    Pick from the existing prompts or write your own. Removing an opinion is reverting one recorded change, not peeling layers off someone else's vision.
+  <Card title="Drop any opinion" icon="random">
+    Don't like a choice we made? Revert the one change that made it. The image rebuilds without it, and stays that way.
   </Card>
-  <Card title="Fearless changes" icon="approve-check">
-    The whole OS is one bootc image. A bad change is one rollback away.
+  <Card title="Break nothing, ever" icon="approve-check">
+    The whole OS is one bootc image on a Fedora base. Updates arrive as a complete system, and a bad change is one rollback away. Experiment freely.
   </Card>
-  <Card title="Every step in the open" icon="open-book">
-    [How it was made](/how-it-was-made/) shows each step's goal, expectations, prompt and result, linked to its commit.
+  <Card title="Know why everything is there" icon="magnifier">
+    Every line traces back to a prompt, a reason and a pull request. No folklore, no forum archaeology.
   </Card>
+</CardGrid>
+
+## Finished, fun, and stable
+
+We are aiming for the polish of a Mac, the fun of Omarchy and the steadiness of Fedora, with zero opinions you can't remove. A small, fast core: the Mango compositor and our own Quickshell desktop shell, scaled to your monitor's real pixel density right from the first boot.
+
+<Aside type="tip" title="Where it is going">
+  A theme that follows your wallpaper across GTK and Qt apps. Shareable intents such as "battery first" or "make it feel like a 2005 Mac" that anyone can apply, adapt and revert. Your whole OS restored on a new laptop from your journal.
+</Aside>
+
+## Built in the open, one prompt at a time
+
+Stack OS is young: the first milestone, a minimal desktop that installs from an ISO onto Btrfs, is coming together now. Every step is published with its goal, its expectations, the exact prompt and the result, each linked to its commit. Watch it grow, or build your own alongside it.
+
+<CardGrid>
+  <LinkCard
+    title="How it was made"
+    description="Every step of Stack OS: goal, prompt, result and commit."
+    href="/how-it-was-made/"
+  />
+  <LinkCard
+    title="Source on GitHub"
+    description="Fork it, star it, or follow along."
+    href="https://github.com/stackific/stack-os"
+  />
 </CardGrid>
