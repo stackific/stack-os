@@ -62,7 +62,7 @@ tasks:
     cmds:
       - >-
         toolbox run --container {{.TOOLBOX}}
-        env STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell"
+        env STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell" STACK_OS_PAM_DIR="{{.ROOT_DIR}}/src/pam"
         mango -c "{{.TASKFILE_DIR}}/mango.conf"
 
   # Headless Mango (no window on the host) with the dev config; its startup
@@ -83,7 +83,7 @@ tasks:
       - >-
         toolbox run --container {{.TOOLBOX}}
         env WLR_BACKENDS=headless WLR_RENDERER=pixman
-        STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell"
+        STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell" STACK_OS_PAM_DIR="{{.ROOT_DIR}}/src/pam"
         mango -c "{{.TASKFILE_DIR}}/mango.conf"
         -s '{{if .RUN}}{{.RUN}} & {{end}}sleep {{.WAIT}}; grim "{{.SHOT}}"; kill $PPID'
         > /dev/null 2>&1 || true

@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-001-02: bar with a terminal launcher
+[001-02: bar with a terminal launcher](https://github.com/stackific/stack-os/commit/b15b840ecac5288b67f0ed6fd0807619034329d3)
 
 ## Goal
 
