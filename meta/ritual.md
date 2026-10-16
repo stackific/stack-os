@@ -34,7 +34,7 @@ Readers see the docs site, the closed PRs and the commits; they never see `meta/
 
 ## Entry template
 
-```markdown
+````markdown
 ---
 title: 3-Power menu       # <n>-Title
 description: One line.
@@ -65,9 +65,11 @@ Must not:
 
 ## Prompt
 One request: the original ask plus every follow-up that changed the result, edited into a
-single coherent ask. A reader should be able to send it as-is.
+single coherent ask. A reader should be able to send it as-is. It is a wrapped code block titled "Prompt", so the docs show a copy button on it.
 
-> prompt text
+```text title="Prompt" wrap
+prompt text
+```
 
 ## Outcome
 One coherent response to that prompt: what was built and how it meets the expectations.
@@ -85,7 +87,7 @@ Where the result differs from the plan or the meta docs, and whether the docs we
 
 ## Follow-ups
 Open items, with the step ID that picks them up once known.
-```
+````
 
 ## What is not recorded
 

@@ -66,11 +66,12 @@ tasks:
         mango -c "{{.TASKFILE_DIR}}/mango.conf"
 
   # Headless Mango (no window on the host) with the dev config; its startup
-  # command waits for the shell to load, captures the output with grim, then
-  # stops Mango ($PPID), which also ends the shell. For checking the shell
-  # without a display, e.g. by an agent.
+  # command optionally starts an app (RUN, e.g. RUN=foot) so it shows in the
+  # shot, waits for the shell to load, captures the output with grim, then
+  # stops Mango ($PPID), which also ends the shell and the app. For checking
+  # the shell without a display, e.g. by an agent.
   screenshot:
-    desc: Capture the shell in headless Mango to output/screenshots/shell.png
+    desc: Capture the shell in headless Mango to output/screenshots/shell.png (RUN=app to open one first)
     deps: [install]
     preconditions:
       - sh: podman container exists {{.TOOLBOX}}
@@ -84,7 +85,7 @@ tasks:
         env WLR_BACKENDS=headless WLR_RENDERER=pixman
         STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell"
         mango -c "{{.TASKFILE_DIR}}/mango.conf"
-        -s 'sleep {{.WAIT}}; grim "{{.SHOT}}"; kill $PPID'
+        -s '{{if .RUN}}{{.RUN}} & {{end}}sleep {{.WAIT}}; grim "{{.SHOT}}"; kill $PPID'
         > /dev/null 2>&1 || true
       # Fail rather than leave an agent looking at a stale or empty image.
       - >-

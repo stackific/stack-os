@@ -58,3 +58,6 @@ references/.cocoindex_code/*
 
 # Build output: RPMs, images and ISOs (decision 01).
 output/
+
+# Agent worktrees, created and removed by Claude Code.
+.claude/worktrees/

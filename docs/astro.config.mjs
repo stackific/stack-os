@@ -8,6 +8,16 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Stack OS',
+      customCss: ['./src/styles/custom.css'],
+      head: [
+        // Commit links (each entry's first line) open in a new tab; custom.css
+        // draws their GitHub and external-link icons.
+        {
+          tag: 'script',
+          content:
+            "document.addEventListener('DOMContentLoaded',()=>document.querySelectorAll('a[href^=\"https://github.com/stackific/stack-os/commit/\"]').forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'}))",
+        },
+      ],
       social: [
         {
           icon: 'github',

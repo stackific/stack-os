@@ -5,9 +5,9 @@ Milestones are rolling, added as the roadmap grows. One folder per milestone, `N
 ## Status
 
 Milestone: M1 (planned, approved)
-Step: M1-1 (dev environment) done, on branch `m1-minimal-desktop`
-Open PRs: #1 (project setup)
-Next: `commit and PR` for M1-1, then `next step` for M1-2 (Quickshell bar with the foot launcher)
+Step: 001-02 (bar with a terminal launcher) done on branch `m1-minimal-desktop`; 001-01 is b6e67e9
+Open PRs: #1 (project setup), #2 (001: Minimal desktop)
+Next: `next step` for 001-03 (power menu)
 
 ## Milestones
 

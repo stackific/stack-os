@@ -31,7 +31,7 @@ Open questions, each with a recommendation: `open-questions.md`.
 
 Steps:
 
-- [ ] 1: dev environment: toolbox with Mango, Quickshell and foot; Quickshell 0.3.x built from source against the exact Qt it runs with (not Fedora's 0.2.1 snapshot), by one recipe the image build (step 4) reuses; `task dev:setup`, `task dev:run` runs Mango nested with the shell from the repo (Restart and Shut down only print in dev mode)
+- [x] 1 (b6e67e9): dev environment: toolbox with Mango, Quickshell and foot; Quickshell 0.3.x built from source against the exact Qt it runs with (not Fedora's 0.2.1 snapshot), by one recipe the image build (step 4) reuses; `task dev:setup`, `task dev:run` runs Mango nested with the shell from the repo (Restart and Shut down only print in dev mode)
 - [ ] 2: Quickshell bar with the foot launcher icon
 - [ ] 3: power menu: lock, log out (`mmsg dispatch quit`), restart, shut down (`systemctl`) (decision 03)
 - [ ] 4: image skeleton: Containerfile, feature layout, `task image:build`, `task image:check` (assertions inside the built image), zram swap via `zram-generator` (decision 01)

@@ -5,7 +5,7 @@ sidebar:
   order: 1
 ---
 
-001-01: dev environment for the shell
+[001-01: dev environment for the shell](https://github.com/stackific/stack-os/commit/b6e67e99b4cef7cea276fa2e3806c0f81c992099)
 
 ## Goal
 
@@ -44,13 +44,15 @@ Must not:
 
 ## Prompt
 
-> Implement M1-1, the dev environment for the Stack OS shell. All code lives under `src/`, one folder per project; every developer command goes through Task (`task <name>`, from taskfile.dev), never `bun` or `bunx` directly.
->
-> Pin the inputs in a root `versions.yml`: the `fedora-toolbox:44` image by digest, and Quickshell v0.3.2 by tag and commit. Add `task quickshell:rpm`, which builds Quickshell from that tag in a container from the pinned image, using an RPM spec of our own (adapted from Fedora's, with 0.3.2's options, Wayland only, no crash handler, no Hyprland or i3 integrations) that requires the exact Qt versions it was built against. It verifies the tag's commit, writes `output/rpms/quickshell-<key>.rpm` keyed by a hash of the pin, the image, the spec and the build script, skips the build when that file exists, never leaves a half-written RPM behind, and keeps a working ccache between builds.
->
-> Add `task dev:setup`, which builds a toolbox image from the same pinned image with Mango from Terra, foot, grim and that RPM (no compiling), tagged so that a change to the RPM or the Containerfile rebuilds it, and creates the `stack-os-dev` toolbox; `task dev:run`, which starts Mango nested in a window with a dev config that keeps Mango's stock bindings, sets `STACK_OS_DEV=1` and starts the shell from `src/shell/` with live reload; and `task dev:screenshot`, which runs the same session headless, saves a screenshot to `output/screenshots/shell.png` with grim and fails if none was taken. The shell itself is a placeholder bar for now.
->
-> `task setup` at the root installs every dependency: Bun, uv, podman and toolbox when missing, the git hooks, the docs site, the Quickshell RPM and the dev toolbox. Drop the Task npm package; Task is installed from taskfile.dev. Keep the Taskfiles modular (one per folder, each with an `install` task, included from the root) and document every file inline.
+```text title="Prompt" wrap
+Implement M1-1, the dev environment for the Stack OS shell. All code lives under `src/`, one folder per project; every developer command goes through Task (`task <name>`, from taskfile.dev), never `bun` or `bunx` directly.
+
+Pin the inputs in a root `versions.yml`: the `fedora-toolbox:44` image by digest, and Quickshell v0.3.2 by tag and commit. Add `task quickshell:rpm`, which builds Quickshell from that tag in a container from the pinned image, using an RPM spec of our own (adapted from Fedora's, with 0.3.2's options, Wayland only, no crash handler, no Hyprland or i3 integrations) that requires the exact Qt versions it was built against. It verifies the tag's commit, writes `output/rpms/quickshell-<key>.rpm` keyed by a hash of the pin, the image, the spec and the build script, skips the build when that file exists, never leaves a half-written RPM behind, and keeps a working ccache between builds.
+
+Add `task dev:setup`, which builds a toolbox image from the same pinned image with Mango from Terra, foot, grim and that RPM (no compiling), tagged so that a change to the RPM or the Containerfile rebuilds it, and creates the `stack-os-dev` toolbox; `task dev:run`, which starts Mango nested in a window with a dev config that keeps Mango's stock bindings, sets `STACK_OS_DEV=1` and starts the shell from `src/shell/` with live reload; and `task dev:screenshot`, which runs the same session headless, saves a screenshot to `output/screenshots/shell.png` with grim and fails if none was taken. The shell itself is a placeholder bar for now.
+
+`task setup` at the root installs every dependency: Bun, uv, podman and toolbox when missing, the git hooks, the docs site, the Quickshell RPM and the dev toolbox. Drop the Task npm package; Task is installed from taskfile.dev. Keep the Taskfiles modular (one per folder, each with an `install` task, included from the root) and document every file inline.
+```
 
 ## Outcome
 
