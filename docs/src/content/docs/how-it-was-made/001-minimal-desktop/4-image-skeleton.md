@@ -5,7 +5,7 @@ sidebar:
   order: 4
 ---
 
-001-04: image skeleton
+[001-04: image skeleton](https://github.com/stackific/stack-os/commit/08cfc1054930b79c7d44215b9cb96bd5afacb831)
 
 ## Goal
 

@@ -1,0 +1,41 @@
+version: "3"
+
+# The login and the graphical session (decisions 02 and 05): greetd with the
+# tuigreet greeter on VT 1, the Stack OS session (Mango with the image's own
+# config, both under /usr/share/stack-os/), and the shell as the user service
+# stack-os-shell.service, wanted by Mango's session target through a link
+# under /usr (nothing in /etc). Fedora's /etc/pam.d/greetd is left as it is;
+# the greeter user comes from greetd's sysusers.d entry, and its home is
+# created at boot by tmpfiles.d (the image ships /var empty).
+tasks:
+  install:
+    cmds:
+      - install-packages
+      - cp -r rootfs/. /
+      - systemctl enable greetd.service
+      - systemctl set-default graphical.target
+
+  check:
+    cmds:
+      - check-packages
+      - systemctl is-enabled greetd.service
+      - test "$(systemctl get-default)" = graphical.target
+      - test "$(readlink /usr/lib/systemd/user/mango-session.target.wants/stack-os-shell.service)" = ../stack-os-shell.service
+      # The service depends on Mango shipping its session target.
+      - test -f /usr/lib/systemd/user/mango-session.target
+      - grep -q '^d /var/lib/greetd 0750 greetd greetd' /usr/lib/tmpfiles.d/stack-os-greetd.conf
+      - getent passwd greetd
+      - grep -q 'tuigreet --remember --asterisks --sessions /usr/share/stack-os/wayland-sessions' /etc/greetd/config.toml
+      - test "$(ls /usr/share/stack-os/wayland-sessions)" = stack-os.desktop
+      - grep -q '^Exec=mango -c /usr/share/stack-os/mango/config.conf$' /usr/share/stack-os/wayland-sessions/stack-os.desktop
+      - grep -q '^source=/etc/mango/config.conf$' /usr/share/stack-os/mango/config.conf
+      - grep -q '^allow_lock_transparent=0$' /usr/share/stack-os/mango/config.conf
+      - grep -q '^bind=SUPER,l,spawn,qs -p /usr/share/stack-os/shell ipc call lock lock$' /usr/share/stack-os/mango/config.conf
+      # Mango parses the session config without errors.
+      - mango -c /usr/share/stack-os/mango/config.conf -p
+      - grep -q '^ExecStart=/usr/bin/qs -p /usr/share/stack-os/shell$' /usr/lib/systemd/user/stack-os-shell.service
+      - grep -q '^Restart=on-failure$' /usr/lib/systemd/user/stack-os-shell.service
+      - grep -q '^Environment=QS_DISABLE_FILE_WATCHER=1$' /usr/lib/systemd/user/stack-os-shell.service
+      # Fedora's own greetd PAM file, unchanged.
+      # (rpm -V exits non-zero anyway: config.toml is replaced on purpose.)
+      - test -z "$(rpm -V greetd | grep ' /etc/pam.d/greetd$' || true)"

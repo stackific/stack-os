@@ -33,9 +33,9 @@ Steps:
 - [x] 1 (b6e67e9): dev environment: toolbox with Mango, Quickshell and foot; Quickshell 0.3.x built from source against the exact Qt it runs with (not Fedora's 0.2.1 snapshot), by one recipe the image build (step 4) reuses; `task dev:setup`, `task dev:run` runs Mango nested with the shell from the repo (Restart and Shut down only print in dev mode)
 - [x] 2 (b15b840): Quickshell bar with the foot launcher icon
 - [x] 3 (92c6d28): power menu: lock, log out (`mmsg dispatch quit`), restart, shut down (`systemctl`) (decision 03)
-- [ ] 4: image skeleton: Containerfile, feature layout, `task image:build`, `task image:check` (assertions inside the built image), zram swap via `zram-generator` (decision 01)
+- [x] 4 (08cfc10): image skeleton: Containerfile, feature layout, `task image:build`, `task image:check` (assertions inside the built image), zram swap via `zram-generator` (decision 01)
 - [ ] 5: login manager into Mango (decision 02)
 - [ ] 6: display scale from physical DPI, `task scale:test` (decision 04)
 - [ ] 7: VM boot test on a Btrfs root: `task disk:qcow2`, `task vm:run` (QEMU with KVM)
 - [ ] 8: installer ISO that installs to Btrfs: `task iso`, `task vm:install`
-- [ ] 9: lock every package: `task lock`, `rootfs.lock`, `image.lock`, versionlock in the build, `image:check` fails on any difference, Fedora's `go-task` pinned (decision 01)
+- [ ] 9: lock every package: `task lock`, `rootfs.lock`, `image.lock`, versionlock in the build, `image:check` fails on any difference, Fedora's `go-task` pinned, `terra-release` installed from a checksum-pinned RPM instead of without a GPG check (decision 01)

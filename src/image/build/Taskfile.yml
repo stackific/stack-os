@@ -10,6 +10,7 @@ includes:
   system: { taskfile: ../features/system, dir: ../features/system }
   desktop: { taskfile: ../features/desktop, dir: ../features/desktop }
   shell: { taskfile: ../features/shell, dir: ../features/shell }
+  session: { taskfile: ../features/session, dir: ../features/session }
 
 tasks:
   all:
@@ -20,6 +21,7 @@ tasks:
       - task: system:install
       - task: desktop:install
       - task: shell:install
+      - task: session:install
 
   check:
     desc: Assert every feature in a built image
@@ -28,6 +30,7 @@ tasks:
       - task: system:check
       - task: desktop:check
       - task: shell:check
+      - task: session:check
 
   # The last step of every build (adapted from
   # terra-fedora/build/Taskfile.yml:127-151), in its own RUN without the dnf

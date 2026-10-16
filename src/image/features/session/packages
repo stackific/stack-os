@@ -1,0 +1,3 @@
+# package | source | function
+greetd | fedora | Login engine; starts the greeter, then the chosen session
+tuigreet | fedora | Text-mode greeter for greetd
