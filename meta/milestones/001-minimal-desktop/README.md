@@ -35,7 +35,7 @@ Steps:
 - [x] 3 (92c6d28): power menu: lock, log out (`mmsg dispatch quit`), restart, shut down (`systemctl`) (decision 03)
 - [x] 4 (08cfc10): image skeleton: Containerfile, feature layout, `task image:build`, `task image:check` (assertions inside the built image), zram swap via `zram-generator` (decision 01)
 - [x] 5 (4860587): login manager into Mango (decision 02)
-- [ ] 6: display scale from physical DPI, `task scale:test` (decision 04)
-- [ ] 7: VM boot test on a Btrfs root: `task disk:qcow2`, `task vm:run` (QEMU with KVM)
+- [x] 6 (0e80201): display scale from physical DPI, `task scale:test` (decision 04)
+- [ ] 7: VM boot test on a Btrfs root: `task vm:disk`, `task vm:boot`, `task vm:run` (QEMU with KVM)
 - [ ] 8: installer ISO that installs to Btrfs: `task iso`, `task vm:install`
 - [ ] 9: lock every package: `task lock`, `rootfs.lock`, `image.lock`, versionlock in the build, `image:check` fails on any difference, Fedora's `go-task` pinned, `terra-release` installed from a checksum-pinned RPM instead of without a GPG check (decision 01)

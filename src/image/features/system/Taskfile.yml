@@ -22,4 +22,5 @@ tasks:
       - check-packages
       - test -f /usr/lib/systemd/zram-generator.conf
       - grep -q 'type = "btrfs"' /usr/lib/bootc/install/00-stack-os.toml
+      - grep -q 'console=ttyS0' /usr/lib/bootc/kargs.d/00-stack-os-console.toml
       - grep -qx 'HOME=/var/home' /etc/default/useradd

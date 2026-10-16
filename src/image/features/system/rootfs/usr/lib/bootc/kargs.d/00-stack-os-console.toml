@@ -1,0 +1,4 @@
+# Kernel console on the first serial port as well as the screen, so a login
+# prompt reaches the serial console (the VM boot test logs in there). tty0
+# comes last, so the screen stays the main console.
+kargs = ["console=ttyS0,115200n8", "console=tty0"]

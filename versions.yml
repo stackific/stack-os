@@ -11,6 +11,10 @@ toolbox_image: registry.fedoraproject.org/fedora-toolbox:44@sha256:1be401964f508
 # the minimal root filesystem the Stack OS image starts from (decision 01).
 bootc_image: quay.io/fedora/fedora-bootc:44@sha256:9db34195bc0b6be43e17c20ca840be5bc153093c94b62f6792a76fb199eeaced
 
+# bootc-image-builder: turns the image into the boot-test disk and the
+# installer ISO (decision 01).
+bib_image: quay.io/centos-bootc/bootc-image-builder@sha256:30e7eac70b6e4448da57aaff66d6a89dbd1526572e8b77be31da129e692eb3e9
+
 # Quickshell, built from source by `task quickshell:rpm` (decision 05). The build
 # fails if the tag no longer points at this commit.
 quickshell_git: https://git.outfoxxed.me/quickshell/quickshell.git

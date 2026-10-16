@@ -5,7 +5,7 @@ sidebar:
   order: 6
 ---
 
-001-06: display scale from physical DPI
+[001-06: display scale from physical DPI](https://github.com/stackific/stack-os/commit/0e80201d8e626bf126fc3072e8b3f6dc778625e1)
 
 ## Goal
 

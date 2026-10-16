@@ -1,0 +1,85 @@
+version: "3"
+
+# Boot tests for the Stack OS image (001-07). `disk` turns the built image
+# into a QEMU disk with a Btrfs root using bootc-image-builder, which needs
+# rootful podman (sudo); `boot` and `run` start that disk with KVM inside a
+# small container (QEMU, OVMF, Python), rootless, so nothing is installed on
+# the host.
+vars:
+  IMAGE: localhost/stack-os:latest
+  VM_IMAGE:
+    sh: '{ echo "{{.TOOLBOX_IMAGE}}"; cat "{{.ROOT_DIR}}/src/vm/Containerfile"; } | sha256sum | cut -c1-16 | sed "s|^|localhost/stack-os-vm:|"'
+  DISK: "{{.ROOT_DIR}}/output/qcow2/disk.qcow2"
+
+tasks:
+  install:
+    desc: Check the tools the VM tasks need on the host
+    preconditions:
+      - sh: command -v podman
+        msg: Install podman first
+
+  setup:
+    desc: Build the container image with QEMU and UEFI firmware
+    deps: [install]
+    status:
+      - podman image exists "{{.VM_IMAGE}}"
+    cmds:
+      - >-
+        podman build -f "{{.TASKFILE_DIR}}/Containerfile"
+        --build-arg TOOLBOX_IMAGE="{{.TOOLBOX_IMAGE}}"
+        -t "{{.VM_IMAGE}}" "{{.TASKFILE_DIR}}"
+
+  disk:
+    desc: Write output/qcow2/disk.qcow2 from the built image (Btrfs root, test user; uses sudo)
+    deps: [install]
+    preconditions:
+      - sh: podman image exists "{{.IMAGE}}"
+        msg: Run `task image:build` first
+      - sh: echo "{{.BIB_IMAGE}}" | grep -q '@sha256:'
+        msg: Pin bib_image by digest in versions.yml
+    cmds:
+      - mkdir -p "{{.ROOT_DIR}}/output/qcow2"
+      # bootc-image-builder reads the image from root's container storage.
+      - podman save "{{.IMAGE}}" | sudo podman load
+      - >-
+        sudo podman run --rm --privileged
+        --security-opt label=type:unconfined_t
+        -v "{{.TASKFILE_DIR}}/qcow2.toml:/config.toml:ro"
+        -v "{{.ROOT_DIR}}/output:/output"
+        -v /var/lib/containers/storage:/var/lib/containers/storage
+        "{{.BIB_IMAGE}}"
+        --type qcow2 --rootfs btrfs "{{.IMAGE}}"
+      # bootc-image-builder writes as root (the disk and its manifest).
+      - sudo chown -R "$(id -u):$(id -g)" "{{.ROOT_DIR}}/output"
+
+  boot:
+    desc: Boot the disk headless and check login, Btrfs, zram and the session (screenshot)
+    deps: [setup]
+    preconditions:
+      - sh: test -f "{{.DISK}}"
+        msg: Run `task vm:disk` first
+      - sh: test -w /dev/kvm
+        msg: KVM is not available to this user (/dev/kvm)
+    cmds:
+      - >-
+        podman run --rm --device /dev/kvm --security-opt label=disable
+        -v "{{.ROOT_DIR}}/output:/output"
+        -v "{{.TASKFILE_DIR}}/boot-test.py:/boot-test.py:ro"
+        "{{.VM_IMAGE}}" python3 /boot-test.py
+
+  run:
+    desc: Boot the disk with a VNC display on localhost:5900, for trying it by hand
+    deps: [setup]
+    preconditions:
+      - sh: test -f "{{.DISK}}"
+        msg: Run `task vm:disk` first
+      - sh: test -w /dev/kvm
+        msg: KVM is not available to this user (/dev/kvm)
+    cmds:
+      # The same machine as the boot test (boot-test.py --interactive).
+      - >-
+        podman run --rm -it --device /dev/kvm --security-opt label=disable
+        -p 127.0.0.1:5900:5900
+        -v "{{.ROOT_DIR}}/output:/output"
+        -v "{{.TASKFILE_DIR}}/boot-test.py:/boot-test.py:ro"
+        "{{.VM_IMAGE}}" python3 /boot-test.py --interactive

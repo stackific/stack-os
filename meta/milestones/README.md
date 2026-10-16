@@ -5,9 +5,9 @@ Milestones are rolling, added as the roadmap grows. One folder per milestone, `N
 ## Status
 
 Milestone: M1 (planned, approved)
-Step: 001-06 (display scale) done on branch `m1-minimal-desktop`; 001-05 is 4860587
+Step: 001-07 (VM boot test) written, boot not yet run (needs sudo: `task vm:disk`) on branch `m1-minimal-desktop`; 001-06 is 0e80201
 Open PRs: #2 (001: Minimal desktop)
-Next: 001-07 (VM boot test on a Btrfs root)
+Next: 001-08 (installer ISO)
 
 ## Milestones
 

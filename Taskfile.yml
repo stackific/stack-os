@@ -15,6 +15,8 @@ vars:
     sh: 'sed -n "s/^toolbox_image: *//p" versions.yml'
   BOOTC_IMAGE:
     sh: 'sed -n "s/^bootc_image: *//p" versions.yml'
+  BIB_IMAGE:
+    sh: 'sed -n "s/^bib_image: *//p" versions.yml'
   QUICKSHELL_GIT:
     sh: 'sed -n "s/^quickshell_git: *//p" versions.yml'
   QUICKSHELL_TAG:
@@ -45,6 +47,9 @@ includes:
   scale:
     taskfile: ./src/scale/Taskfile.yml
     dir: ./src/scale
+  vm:
+    taskfile: ./src/vm/Taskfile.yml
+    dir: ./src/vm
   host: ./taskfiles/host.yml
   index: ./taskfiles/index.yml
 
@@ -66,6 +71,7 @@ tasks:
       - task: dev:setup
       - task: image:install
       - task: scale:install
+      - task: vm:install
 
   lint:
     desc: Run every pre-commit check on all files
