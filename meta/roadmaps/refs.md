@@ -2,7 +2,7 @@
 
 Third-party code to clone into `references/` (gitignored) and index with cocoindex-code. The goal is an Omarchy alternative on Fedora bootc: Mango, Quickshell, a plugin layer like Omarchy's, and wallpaper-derived colors across every app.
 
-The list is organized by what Omarchy ships, from a scan of `references/omarchy-quattro` (530 `bin/` commands, 17 shell plugins, 20 theme templates, 23 themes, 41 hardware scripts, 14 docs, and `omarchy-pkgs` with about 200 PKGBUILDs). Each section names Omarchy's own implementation first, then the upstream projects to study or ship. "Fedora" notes whether a package exists in Fedora, RPM Fusion, or Terra, since the image installs RPMs.
+The list is organized by what Omarchy ships, from a scan of `omarchy-quattro` (530 `bin/` commands, 17 shell plugins, 20 theme templates, 23 themes, 41 hardware scripts, 14 docs, and `omarchy-pkgs` with about 200 PKGBUILDs). Each section names Omarchy's own implementation first, then the upstream projects to study or ship. "Fedora" notes whether a package exists in Fedora, RPM Fusion, or Terra, since the image installs RPMs.
 
 Checked on 2026-10-16: none archived unless marked. Check each license before copying code; DankMaterialShell changed its license in late 2025, and the Omarchy apps are MIT unless noted.
 
@@ -184,7 +184,7 @@ Omarchy: `install/hardware/*.sh` and `bin/omarchy-hw-*` (41 scripts: Apple Silic
 
 ## 15. Install, update, rollback, factory reset
 
-Omarchy: `omarchy-iso` builds the live ISO; `omarchy-pkgs` builds and signs its package repo (`bin/` has release, promote, sign, mirror); `docs/update-process.md` describes the update pipeline with migrations, restart markers, and a pacman guard; snapper plus Limine for bootable snapshots; `omarchy-system-factory-reset`. Ours: bootc images from CI, `terra update` and `rollback`, the `stack` command spec in `STACK-CLI.md`.
+Omarchy: `omarchy-iso` builds the live ISO; `omarchy-pkgs` builds and signs its package repo (`bin/` has release, promote, sign, mirror); `docs/update-process.md` describes the update pipeline with migrations, restart markers, and a pacman guard; snapper plus Limine for bootable snapshots; `omarchy-system-factory-reset`. Ours: bootc images from CI, `terra update` and `rollback`, the `stack` command spec in `cli.md`.
 
 | Repository | Why |
 |---|---|
@@ -204,10 +204,9 @@ Omarchy: `test/shell.d/*.sh` runs the shell's pure JavaScript models under Node 
 
 ## Clone
 
-```sh
+```bash
 mkdir -p references && cd references
-clone() { git clone -q --depth 1 "$1" "${1##*/}" 2>/dev/null || echo "skip $1"; }
-for r in \
+github=(
   quickshell-mirror/quickshell quickshell-mirror/quickshell-examples quickshell-mirror/quickshell-docs KDAB/cxx-qt \
   omacom/omarchy-plugin-marketplace omacom/omarchy-plugin-registry omacom/omarchy-port-forward-plugin omacom/omarchy-notification-center-plugin \
   AvengeMedia/DankMaterialShell AvengeMedia/dank-qml-common AvengeMedia/dank-greeter caelestia-dots/shell end-4/dots-hyprland \
@@ -227,15 +226,28 @@ for r in \
   fcitx/fcitx5 fcitx/fcitx5-configtool \
   omacom/omarchy-mac omacom/linux-aurora omacom/omarchy-power-profiles-daemon \
   omacom/omarchy-iso omacom/omarchy-pkgs omacom/omarchy-mirror \
-  ublue-os/image-template ublue-os/bluefin ublue-os/bazzite bootc-dev/bootc osbuild/bootc-image-builder CentOS/centos-bootc FyraLabs/readymade FyraLabs/katsu; do
-  clone "https://github.com/$r"
+  ublue-os/image-template ublue-os/bluefin ublue-os/bazzite bootc-dev/bootc osbuild/bootc-image-builder CentOS/centos-bootc FyraLabs/readymade FyraLabs/katsu
+)
+urls=(
+  "${github[@]/#/https://github.com/}"
+  https://gitlab.freedesktop.org/wayland/wayland-protocols
+  https://gitlab.freedesktop.org/plymouth/plymouth
+  https://gitlab.com/vicamo/v4l2-relayd
+  https://git.dec05eba.com/gpu-screen-recorder
+  https://git.sr.ht/~kennylevinsen/wlsunset
+)
+n=${#urls[@]} i=0 failed=()
+for url in "${urls[@]}"; do
+  i=$((i + 1)) name=${url##*/}
+  if [ -d "$name" ]; then echo "[$i/$n] $name: already present, skipping"; continue; fi
+  echo "[$i/$n] $name"
+  git clone --depth 1 --progress "$url" "$name" || failed+=("$url")
 done
-clone https://gitlab.freedesktop.org/wayland/wayland-protocols
-clone https://gitlab.freedesktop.org/plymouth/plymouth
-clone https://gitlab.com/vicamo/v4l2-relayd
-clone https://git.dec05eba.com/gpu-screen-recorder
-clone https://git.sr.ht/~kennylevinsen/wlsunset
+echo "Done: $((n - ${#failed[@]}))/$n present."
+[ ${#failed[@]} -eq 0 ] || printf 'Failed: %s\n' "${failed[@]}"
 ```
+
+Runs in bash or zsh. Each repo prints `[i/N] name` followed by git's own transfer progress, so a large clone such as `linux-aurora` shows it is still moving. Folders that already exist are skipped, so a re-run picks up where it stopped, and failures are listed at the end.
 
 `omacom/omarchy` itself is already present as `omarchy-quattro`. `linux-aurora` is a kernel tree (large); drop it from the loop if disk matters.
 
@@ -251,8 +263,15 @@ find references -mindepth 2 -maxdepth 2 -name .git -exec rm -rf {} +
 
 ```sh
 uv tool install --upgrade 'cocoindex-code[full]'   # local embeddings; uses CUDA or Apple's GPU when present
-for d in references/*/; do (cd "$d" && ccc index); done
-claude mcp add cocoindex-code -- ccc mcp
+cd references
+ccc init    # once per machine: picks the embedding model
+ccc index
 ```
 
-cocoindex-code lists C, C++, Go, and Lua but not QML or Luau, so those files may be split by lines rather than by syntax. On macOS use Homebrew's Python: Apple's lacks the SQLite extension support it needs.
+`references/` is a single ccc project, whose settings (`references/.cocoindex_code/settings.yml`) are tracked in the repo; the index databases next to it are not. Indexing each clone on its own does not work: once a clone's `.git` is gone, `ccc index` walks up to the repo root and indexes that instead, and the repo's `.gitignore` excludes the clones. `ccc init` writes `~/.cocoindex_code/global_settings.yml`, asking for an embedding model when run in a terminal (the default is the local `Snowflake/snowflake-arctic-embed-xs`), and leaves the tracked project settings alone.
+
+Claude Code starts the MCP server from `.mcp.json` (`cd references && exec ccc mcp`), so no `claude mcp add` is needed. `ccc mcp` serves the nearest project at or above its working directory, which is why it starts inside `references/`. Its one tool is `search`.
+
+ccc's default `include_patterns` leave out QML and Luau; the tracked settings add `**/*.qml` and `**/*.luau`. Edit that file to change what is indexed, then run `ccc index` again.
+
+The GPU is used only when a GPU driver is loaded: on NVIDIA that means the proprietary driver (RPM Fusion `akmod-nvidia`), not nouveau. On macOS use Homebrew's Python: Apple's lacks the SQLite extension support it needs.

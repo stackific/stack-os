@@ -1,0 +1,24 @@
+version: "3"
+
+# The Stack OS shell: the Quickshell RPM built by `task quickshell:rpm` (passed
+# in as QUICKSHELL_RPM, mounted from output/rpms/), the shell's QML under
+# /usr/share/stack-os/shell and the lock's PAM file under
+# /usr/share/stack-os/pam (decisions 03 and 05). The RPM requires the exact Qt
+# it was built against; dnf pulls that Qt, from updates-archive if needed.
+tasks:
+  install:
+    cmds:
+      - test -f "$QUICKSHELL_RPM"
+      - >-
+        dnf -y install --setopt=install_weak_deps=False --setopt=keepcache=True
+        --enablerepo=updates-archive "$QUICKSHELL_RPM"
+      - install -d /usr/share/stack-os/shell /usr/share/stack-os/pam
+      - cp -r /ctx/shell/. /usr/share/stack-os/shell/
+      - install -m 0644 /ctx/pam/stack-os-lock /usr/share/stack-os/pam/stack-os-lock
+
+  check:
+    cmds:
+      # The installed qs is the version its RPM says, whatever the pin is.
+      - qs --version | grep -q "^Quickshell $(rpm -q --qf '%{VERSION}' quickshell) "
+      - test -f /usr/share/stack-os/shell/shell.qml
+      - test -f /usr/share/stack-os/pam/stack-os-lock

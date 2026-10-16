@@ -1,0 +1,11 @@
+# bootc-image-builder config for the boot-test disk: a throwaway user for
+# boot tests only, never for real installs, and room for the root filesystem
+# (as in terra-fedora/disk/qcow2.toml:1-11).
+[[customizations.user]]
+name = "test"
+password = "test"
+groups = ["wheel"]
+
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "20 GiB"

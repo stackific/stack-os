@@ -1,0 +1,34 @@
+---
+title: Stack OS
+description: An OS, and an AI-native framework to build your own modern, efficient OS from recorded prompts.
+template: splash
+hero:
+  tagline: An OS, and an AI-native framework to build your own extremely modern and efficient OS without becoming an expert overnight. Tell your AI to build it with Stack OS.
+  actions:
+    - text: How it was made
+      link: /how-it-was-made/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/stackific/stack-os
+      icon: github
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+The OS you make is yours: every decision visible, portable, reversible, and rebuildable by anyone with an AI and the prompts. Apple-level finish, Omarchy-level fun, Fedora-stable, zero opinions you can't remove.
+
+<CardGrid stagger>
+  <Card title="Prompts are the source" icon="pencil">
+    Every change is recorded with its prompt, its diff and its reason. Paste the prompts into your own AI to rebuild Stack OS, or vary it.
+  </Card>
+  <Card title="Fork it, make it yours" icon="random">
+    Pick from the existing prompts or write your own. Removing an opinion is reverting one recorded change, not peeling layers off someone else's vision.
+  </Card>
+  <Card title="Fearless changes" icon="approve-check">
+    The whole OS is one bootc image. A bad change is one rollback away.
+  </Card>
+  <Card title="Every step in the open" icon="open-book">
+    [How it was made](/how-it-was-made/) shows each step's goal, expectations, prompt and result, linked to its commit.
+  </Card>
+</CardGrid>

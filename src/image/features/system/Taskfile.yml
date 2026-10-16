@@ -1,0 +1,26 @@
+version: "3"
+
+# The base every installed system needs on top of the minimal manifest: zram
+# swap, Btrfs as the install default (rootfs/usr/lib/bootc/install/), and
+# account tools. Homes live in /var/home (/home links there), as in Fedora's
+# own bootc image; the minimal base keeps HOME=/home in useradd's defaults,
+# which leaves home files labelled var_t by SELinux, so the default is moved
+# and the per-user file contexts regenerated (as in
+# terra-fedora/features/system/Taskfile.yml:6-9,19-21).
+tasks:
+  install:
+    cmds:
+      - install-packages
+      # cp -r, not -a: files take root ownership and the image's SELinux
+      # labels instead of the checkout's.
+      - cp -r rootfs/. /
+      - sed -i 's|^HOME=.*|HOME=/var/home|' /etc/default/useradd
+      - semodule -B
+
+  check:
+    cmds:
+      - check-packages
+      - test -f /usr/lib/systemd/zram-generator.conf
+      - grep -q 'type = "btrfs"' /usr/lib/bootc/install/00-stack-os.toml
+      - grep -q 'console=ttyS0' /usr/lib/bootc/kargs.d/00-stack-os-console.toml
+      - grep -qx 'HOME=/var/home' /etc/default/useradd

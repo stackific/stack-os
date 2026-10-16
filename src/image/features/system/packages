@@ -1,0 +1,6 @@
+# package | source | function
+zram-generator-defaults | fedora | Compressed swap in RAM, the only swap
+btrfs-progs | fedora | Btrfs tools; the root filesystem is Btrfs
+shadow-utils | fedora | useradd and passwd; the installer creates the account with them
+sudo | fedora | Run commands as an administrator
+policycoreutils | fedora | semodule, to regenerate SELinux file contexts

@@ -1,0 +1,94 @@
+version: "3"
+
+# The local shell loop (M1-1): a toolbox with Mango, foot and the pinned
+# Quickshell, and nested Mango running the shell straight from src/shell/.
+#
+# The toolbox image is tagged with a hash of the Quickshell RPM's key
+# (QUICKSHELL_KEY) and this folder's Containerfile, so a pin or package change
+# rebuilds the image and recreates the toolbox; otherwise setup does nothing.
+vars:
+  TOOLBOX: stack-os-dev
+  IMAGE_KEY:
+    # ROOT_DIR, not TASKFILE_DIR: Task evaluates this for every included
+    # Taskfile, each with its own TASKFILE_DIR.
+    sh: '{ echo "{{.QUICKSHELL_KEY}}"; cat "{{.ROOT_DIR}}/src/dev/Containerfile"; } | sha256sum | cut -c1-16'
+  IMAGE: "localhost/stack-os-dev:{{.IMAGE_KEY}}"
+  SHOT: "{{.ROOT_DIR}}/output/screenshots/shell.png"
+
+tasks:
+  install:
+    desc: Check the tools the dev environment needs on the host
+    preconditions:
+      - sh: command -v podman
+        msg: Install podman first
+      - sh: command -v toolbox
+        msg: Install toolbox first (dnf install toolbox)
+
+  setup:
+    desc: Build the dev toolbox image and create the stack-os-dev toolbox
+    deps: [install]
+    cmds:
+      - task: :quickshell:rpm
+      - task: image
+      - task: toolbox
+
+  image:
+    internal: true
+    status:
+      - podman image exists "{{.IMAGE}}"
+    cmds:
+      - >-
+        podman build
+        -f "{{.TASKFILE_DIR}}/Containerfile"
+        --build-arg TOOLBOX_IMAGE="{{.TOOLBOX_IMAGE}}"
+        --build-arg QUICKSHELL_KEY="{{.QUICKSHELL_KEY}}"
+        -t "{{.IMAGE}}"
+        "{{.ROOT_DIR}}/output/rpms"
+
+  toolbox:
+    internal: true
+    status:
+      - test "$(podman container inspect --format '{{"{{"}}.ImageName{{"}}"}}' {{.TOOLBOX}} 2>/dev/null)" = "{{.IMAGE}}"
+    cmds:
+      - toolbox rm --force {{.TOOLBOX}} 2>/dev/null || true
+      - toolbox create --assumeyes --image "{{.IMAGE}}" {{.TOOLBOX}}
+
+  run:
+    desc: Start Mango nested in a window with the shell from src/shell/ (live reload)
+    deps: [install]
+    preconditions:
+      - sh: podman container exists {{.TOOLBOX}}
+        msg: Run `task dev:setup` first
+    cmds:
+      - >-
+        toolbox run --container {{.TOOLBOX}}
+        env STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell" STACK_OS_PAM_DIR="{{.ROOT_DIR}}/src/pam"
+        mango -c "{{.TASKFILE_DIR}}/mango.conf"
+
+  # Headless Mango (no window on the host) with the dev config; its startup
+  # command optionally starts an app (RUN, e.g. RUN=foot) so it shows in the
+  # shot, waits for the shell to load, captures the output with grim, then
+  # stops Mango ($PPID), which also ends the shell and the app. For checking
+  # the shell without a display, e.g. by an agent.
+  screenshot:
+    desc: Capture the shell in headless Mango to output/screenshots/shell.png (RUN=app to open one first)
+    deps: [install]
+    preconditions:
+      - sh: podman container exists {{.TOOLBOX}}
+        msg: Run `task dev:setup` first
+    vars:
+      WAIT: '{{.WAIT | default "4"}}'
+    cmds:
+      - mkdir -p "$(dirname "{{.SHOT}}")" && rm -f "{{.SHOT}}"
+      - >-
+        toolbox run --container {{.TOOLBOX}}
+        env WLR_BACKENDS=headless WLR_RENDERER=pixman
+        STACK_OS_DEV=1 STACK_OS_SHELL="{{.ROOT_DIR}}/src/shell" STACK_OS_PAM_DIR="{{.ROOT_DIR}}/src/pam"
+        mango -c "{{.TASKFILE_DIR}}/mango.conf"
+        -s '{{if .RUN}}{{.RUN}} & {{end}}sleep {{.WAIT}}; grim "{{.SHOT}}"; kill $PPID'
+        > /dev/null 2>&1 || true
+      # Fail rather than leave an agent looking at a stale or empty image.
+      - >-
+        test -s "{{.SHOT}}" ||
+        { echo "No screenshot: Mango, qs or grim failed; rerun without the redirect to see why." >&2; exit 1; }
+      - echo "{{.SHOT}}"

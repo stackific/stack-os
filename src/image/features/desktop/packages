@@ -1,0 +1,6 @@
+# package | source | function
+mangowm | terra | Mango, the Wayland compositor
+foot | fedora | Terminal, opened from the bar
+dejavu-sans-fonts | fedora | Font for the shell
+dejavu-sans-mono-fonts | fedora | Monospace font for foot
+mesa-dri-drivers | fedora | Mesa, the only graphics driver

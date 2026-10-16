@@ -1,0 +1,95 @@
+version: "3"
+
+# Each project folder has its own Taskfile.yml with an `install` task, included here and called by `setup`.
+
+# The user-level installers put bun in ~/.bun/bin and uv in ~/.local/bin; add
+# both so a fresh `task setup` can use them before the shell is restarted.
+env:
+  PATH:
+    sh: 'echo "$HOME/.bun/bin:$HOME/.local/bin:$PATH"'
+
+# Pins from versions.yml (decision 01), visible to every included Taskfile. The
+# variable is the key in upper case.
+vars:
+  TOOLBOX_IMAGE:
+    sh: 'sed -n "s/^toolbox_image: *//p" versions.yml'
+  BOOTC_IMAGE:
+    sh: 'sed -n "s/^bootc_image: *//p" versions.yml'
+  BIB_IMAGE:
+    sh: 'sed -n "s/^bib_image: *//p" versions.yml'
+  TERRA_RELEASE_URL:
+    sh: 'sed -n "s/^terra_release_url: *//p" versions.yml'
+  TERRA_RELEASE_SHA256:
+    sh: 'sed -n "s/^terra_release_sha256: *//p" versions.yml'
+  TERRA_GPG_KEYS_URL:
+    sh: 'sed -n "s/^terra_gpg_keys_url: *//p" versions.yml'
+  TERRA_GPG_KEYS_SHA256:
+    sh: 'sed -n "s/^terra_gpg_keys_sha256: *//p" versions.yml'
+  QUICKSHELL_GIT:
+    sh: 'sed -n "s/^quickshell_git: *//p" versions.yml'
+  QUICKSHELL_TAG:
+    sh: 'sed -n "s/^quickshell_tag: *//p" versions.yml'
+  QUICKSHELL_COMMIT:
+    sh: 'sed -n "s/^quickshell_commit: *//p" versions.yml'
+  # Key of the Quickshell RPM: a hash of every input of its build (the pins,
+  # the builder image, the spec and the build script). See src/quickshell/Taskfile.yml.
+  QUICKSHELL_KEY:
+    sh: >-
+      { grep -E '^(toolbox_image|quickshell_[a-z]+):' versions.yml;
+      cat src/quickshell/quickshell.spec src/quickshell/build-rpm.sh; }
+      | sha256sum | cut -c1-16
+
+includes:
+  docs:
+    taskfile: ./docs/Taskfile.yml
+    dir: ./docs
+  dev:
+    taskfile: ./src/dev/Taskfile.yml
+    dir: ./src/dev
+  quickshell:
+    taskfile: ./src/quickshell/Taskfile.yml
+    dir: ./src/quickshell
+  image:
+    taskfile: ./src/image/Taskfile.yml
+    dir: ./src/image
+  scale:
+    taskfile: ./src/scale/Taskfile.yml
+    dir: ./src/scale
+  vm:
+    taskfile: ./src/vm/Taskfile.yml
+    dir: ./src/vm
+  host: ./taskfiles/host.yml
+  index: ./taskfiles/index.yml
+
+tasks:
+  default:
+    cmds:
+      - "{{.TASK_EXE}} --list"
+
+  # Everything a developer needs, in order: host tools, the root's JS tooling
+  # and git hooks, the docs site, then the Quickshell RPM and the dev toolbox.
+  # Each step is skipped when already done, so rerunning is cheap.
+  setup:
+    desc: Install all dependencies, the git hooks and the dev toolbox
+    cmds:
+      - task: host:install
+      - bun install
+      - task: docs:install
+      # Reaches quickshell:install and dev:install through its dependencies.
+      - task: dev:setup
+      - task: image:install
+      - task: scale:install
+      - task: vm:install
+
+  # What the on-demand build workflow runs (.github/workflows/build.yml): the
+  # image, then the installer ISO, leaving exactly one output/*.iso.
+  iso:
+    desc: Build the image and the installer ISO, output/stack-os.iso (uses sudo)
+    cmds:
+      - task: image:build
+      - task: vm:iso
+
+  lint:
+    desc: Run every pre-commit check on all files
+    cmds:
+      - bun run lint

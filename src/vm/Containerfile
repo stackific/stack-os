@@ -1,0 +1,8 @@
+# QEMU, UEFI firmware (OVMF) and Python for the VM boot test (001-07), on the
+# pinned Fedora toolbox image, so nothing is installed on the developer's
+# machine. Built by `task vm:setup`; runs rootless with /dev/kvm passed in.
+ARG TOOLBOX_IMAGE
+FROM ${TOOLBOX_IMAGE}
+RUN dnf -y install --setopt=install_weak_deps=False \
+  qemu-system-x86-core qemu-img edk2-ovmf python3 \
+  && dnf clean all

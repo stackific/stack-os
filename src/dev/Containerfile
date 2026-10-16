@@ -1,0 +1,27 @@
+# Dev toolbox for the Stack OS shell (M1-1): Mango, foot, grim (screenshots
+# for `task dev:screenshot`) and the pinned Quickshell RPM on the pinned Fedora 44 toolbox image. Built by
+# `task dev:setup` with output/rpms/ as the build context, so the repo (and
+# references/) is never sent to the builder. Nothing is compiled here: the
+# Quickshell RPM comes from `task quickshell:rpm`.
+ARG TOOLBOX_IMAGE
+FROM ${TOOLBOX_IMAGE}
+
+# Key of the Quickshell RPM to install, from src/quickshell/Taskfile.yml.
+ARG QUICKSHELL_KEY
+
+# Terra (Fyra Labs) is the only third-party repository; it ships Mango.
+# terra-release carries Terra's signing key, so only its own install skips the
+# GPG check and everything after is verified.
+RUN dnf -y install --nogpgcheck \
+  --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+  terra-release
+
+# updates-archive keeps the exact Qt the Quickshell RPM requires installable
+# after Fedora's `updates` repository moves on; fedora-repos-archive adds it.
+COPY quickshell-${QUICKSHELL_KEY}.rpm /tmp/
+RUN dnf -y install fedora-repos-archive \
+  && dnf -y install --setopt=install_weak_deps=False --enablerepo=updates-archive \
+  mangowm foot grim dejavu-sans-mono-fonts mesa-dri-drivers \
+  /tmp/quickshell-${QUICKSHELL_KEY}.rpm \
+  && rm /tmp/quickshell-${QUICKSHELL_KEY}.rpm \
+  && dnf clean all

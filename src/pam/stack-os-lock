@@ -1,0 +1,5 @@
+# PAM service for the Stack OS lock screen (decision 03), read by the shell's
+# PamContext from /usr/share/stack-os/pam/ (the repository's src/pam/ in the dev
+# session). Password only: no login or system-auth includes, so the lock never
+# waits on a fingerprint reader and does not depend on files under /etc.
+auth required pam_unix.so

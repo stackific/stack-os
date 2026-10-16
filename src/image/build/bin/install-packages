@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+# install-packages [file]
+# Installs the RPMs listed in a feature's `packages` file (default ./packages):
+# lines of `name | source | function`, `#` for comments. Weak dependencies
+# are never installed, so a package a feature needs is named in that feature.
+# Fedora's updates-archive stays enabled, so pinned versions (such as the Qt
+# the Quickshell RPM requires) remain installable after `updates` moves on.
+set -euo pipefail
+file="${1:-packages}"
+mapfile -t names < <(sed -e 's/#.*//' -e 's/|.*//' -e 's/[[:space:]]//g' "$file" | grep -v '^$')
+((${#names[@]})) || exit 0
+exec dnf -y install --setopt=install_weak_deps=False --setopt=keepcache=True \
+  --enablerepo=updates-archive "${names[@]}"

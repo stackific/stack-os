@@ -1,0 +1,20 @@
+# bootc-image-builder config for the installer ISO (001-08, as in
+# terra-fedora/disk/iso.toml:1-11). The kickstart selects the graphical
+# installer, so the user picks the language, the disk (with optional
+# encryption) and creates their account; without it the ISO would install to
+# the first disk unattended. Its %post points the installed system at the
+# future registry image instead of the local build (decision 01, as in
+# image-template/disk_config/iso-gnome.toml:1-6), so `bootc upgrade` works
+# once Stack OS is published. The subscription module is Red Hat's and has no
+# use here.
+[customizations.installer.kickstart]
+contents = """
+graphical
+
+%post
+bootc switch --mutate-in-place --transport registry ghcr.io/stackific/stack-os:latest
+%end
+"""
+
+[customizations.installer.modules]
+disable = ["org.fedoraproject.Anaconda.Modules.Subscription"]

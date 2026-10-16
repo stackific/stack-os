@@ -1,0 +1,96 @@
+version: "3"
+
+# Runs inside the image build (see ../Containerfile), with build/bin on PATH.
+# `all` installs every feature in order, `finalize` is the last step of the
+# build, and `check` asserts each feature inside a built image
+# (`task image:check`). Each feature is a folder under ../features/ with a
+# `packages` list and a Taskfile with `install` and `check`.
+includes:
+  repos: { taskfile: ../features/repos, dir: ../features/repos }
+  system: { taskfile: ../features/system, dir: ../features/system }
+  desktop: { taskfile: ../features/desktop, dir: ../features/desktop }
+  shell: { taskfile: ../features/shell, dir: ../features/shell }
+  session: { taskfile: ../features/session, dir: ../features/session }
+  scale: { taskfile: ../features/scale, dir: ../features/scale }
+
+tasks:
+  all:
+    desc: Install every feature, in order
+    cmds:
+      # Repositories first: the lock and the other features need Terra and
+      # updates-archive.
+      - task: repos:install
+      - task: versionlock
+      - task: system:install
+      - task: desktop:install
+      - task: shell:install
+      - task: session:install
+      - task: scale:install
+
+  # Every package of ../image.lock at its locked version while the features
+  # install (decision 01); finalize clears it. No lock file: unlocked. dnf
+  # only warns about an entry it cannot find in an enabled repository, so the
+  # output is checked: every entry must resolve. go-task is already installed
+  # at its locked version, and quickshell is the local RPM, pinned by its key.
+  versionlock:
+    status:
+      - test ! -s ../image.lock
+    cmds:
+      - |
+        out=$(grep -vE '^(go-task|quickshell)-[0-9]' ../image.lock | xargs dnf versionlock add --enablerepo=updates-archive 2>&1)
+        echo "$out" | tail -n 3
+        if echo "$out" | grep -i 'no package'; then
+          echo "image.lock has entries no repository provides; rewrite it with task image:lock" >&2
+          exit 1
+        fi
+
+  check:
+    desc: Assert every feature in a built image
+    cmds:
+      - task: locks
+      - task: repos:check
+      - task: system:check
+      - task: desktop:check
+      - task: shell:check
+      - task: session:check
+      - task: scale:check
+
+  # The image's packages are exactly ../image.lock's (decision 01).
+  locks:
+    status:
+      - test ! -s ../image.lock
+    cmds:
+      - |
+        if ! diff -u ../image.lock <(rpm -qa --qf '%{NAME}-%{EPOCHNUM}:%{VERSION}-%{RELEASE}.%{ARCH}\n' | grep -v '^gpg-pubkey-' | LC_ALL=C sort); then
+          echo "The image's packages differ from image.lock. After adding, removing or updating a package: delete src/image/*.lock, task image:build, task image:lock, task image:build, then commit the locks." >&2
+          exit 1
+        fi
+
+  # The last step of every build (adapted from
+  # terra-fedora/build/Taskfile.yml:127-151), in its own RUN without the dnf
+  # cache mount (see ../Containerfile).
+  finalize:
+    desc: Disable Terra, rebuild the initramfs, empty /var, /tmp and /run, lint
+    cmds:
+      - dnf versionlock clear
+      # Terra keeps its key and repo file but is switched off: the shipped
+      # system only ever installs from Fedora (decision 01).
+      - sed -Ei 's/^enabled[[:space:]]*=.*/enabled=0/' /etc/yum.repos.d/terra*.repo
+      # One initramfs per installed kernel, generic (no host-only), so it boots
+      # on any machine. dracut copies /root, which links to /var/roothome, a
+      # directory only a booted system has, so it is created first.
+      - mkdir -p /var/roothome
+      - |
+        for dir in /usr/lib/modules/*/; do
+          kver=$(basename "$dir")
+          DRACUT_NO_XATTR=1 dracut -f --no-hostonly "$dir/initramfs.img" "$kver"
+          chmod 0600 "$dir/initramfs.img"
+        done
+      - dnf clean all
+      # bootc copies /var to a new system once and never again, so the image
+      # ships it empty; tmpfiles.d recreates what a feature needs. /tmp and
+      # /run are filled by package scripts during the build and are cleared.
+      - find /var -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+      - rm -rf /tmp/*
+      - find /run -xdev -mindepth 1 -depth -delete 2>/dev/null || true
+      - bootc container lint --fatal-warnings

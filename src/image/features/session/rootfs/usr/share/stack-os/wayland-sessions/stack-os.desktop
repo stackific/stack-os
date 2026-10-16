@@ -1,0 +1,9 @@
+# The Stack OS session, the only one tuigreet offers: the session script sets
+# each monitor's scale, then starts Mango with the image's own config under
+# /usr (so nothing in /etc needs editing).
+[Desktop Entry]
+Name=Stack OS
+Comment=Mango with the Stack OS shell
+Exec=/usr/libexec/stack-os/session
+Type=Application
+DesktopNames=mango;wlroots

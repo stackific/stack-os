@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+# check-packages [file]
+# Fails unless every RPM listed in a feature's `packages` file is installed.
+set -euo pipefail
+file="${1:-packages}"
+missing=0
+while read -r name; do
+  rpm -q --whatprovides "$name" >/dev/null 2>&1 || {
+    echo "not installed: $name"
+    missing=1
+  }
+done < <(sed -e 's/#.*//' -e 's/|.*//' -e 's/[[:space:]]//g' "$file" | grep -v '^$')
+exit "$missing"

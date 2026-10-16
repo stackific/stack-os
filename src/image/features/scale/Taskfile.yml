@@ -1,0 +1,30 @@
+version: "3"
+
+# Display scale from physical DPI (decision 04): stack-os-scale (from
+# src/scale/) writes one Mango monitor rule per connected monitor before Mango
+# starts, and the user service stack-os-scale-watch reruns it on hotplug.
+tasks:
+  install:
+    cmds:
+      - install -d /usr/libexec/stack-os
+      - install -m 0755 /ctx/scale/stack-os-scale /ctx/scale/scale-watch /usr/libexec/stack-os/
+      - cp -r rootfs/. /
+
+  check:
+    cmds:
+      - test -x /usr/libexec/stack-os/stack-os-scale
+      - test -x /usr/libexec/stack-os/scale-watch
+      - test "$(readlink /usr/lib/systemd/user/mango-session.target.wants/stack-os-scale-watch.service)" = ../stack-os-scale-watch.service
+      # The installed script, on a fake 27" 4K monitor, writes a rule that
+      # Mango parses without errors (`mango -p` exits 0 even on errors, so its
+      # output is checked).
+      - |
+        d=/tmp/drm/card1-DP-1
+        mkdir -p "$d"
+        head -c 128 /dev/zero >"$d/edid"
+        printf '\x3c\x22' | dd of="$d/edid" bs=1 seek=21 conv=notrunc status=none
+        echo 3840x2160 >"$d/modes"
+        echo connected >"$d/status"
+        STACK_OS_DRM=/tmp/drm /usr/libexec/stack-os/stack-os-scale /tmp/monitors.conf
+        grep -qx 'monitor_rule=name:^DP-1$,scale:1.5' /tmp/monitors.conf
+        test -z "$(mango -c /tmp/monitors.conf -p 2>&1)"

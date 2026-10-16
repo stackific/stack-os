@@ -1,0 +1,47 @@
+version: "3"
+
+# Builds the pinned Quickshell as an RPM (decisions 01 and 05). The dev toolbox
+# installs it now; the disk image installs the same file later, so the image
+# build never compiles.
+#
+# The RPM is named by QUICKSHELL_KEY (root Taskfile.yml): a hash of every input
+# of the build (the pins, the builder image, the spec and the build script). If
+# output/rpms/ already holds the RPM for the current key, nothing runs. ccache
+# in .cache/ccache shortens real rebuilds. Only this folder is mounted into the
+# builder, so the rest of the repo is neither exposed nor relabelled.
+vars:
+  OUT: "{{.ROOT_DIR}}/output/rpms"
+  CCACHE: "{{.ROOT_DIR}}/.cache/ccache"
+  RPM: "{{.OUT}}/quickshell-{{.QUICKSHELL_KEY}}.rpm"
+
+tasks:
+  install:
+    desc: Check the tools the Quickshell build needs on the host
+    preconditions:
+      - sh: command -v podman
+        msg: Install podman first
+
+  rpm:
+    desc: Build the pinned Quickshell RPM into output/rpms/ (skipped if built)
+    deps: [install]
+    status:
+      - test -f "{{.RPM}}"
+    cmds:
+      - mkdir -p "{{.OUT}}" "{{.CCACHE}}"
+      - >-
+        podman run --rm
+        -v "{{.TASKFILE_DIR}}:/src/quickshell:ro,z"
+        -v "{{.OUT}}:/out:z"
+        -v "{{.CCACHE}}:/ccache:z"
+        -e QS_GIT="{{.QUICKSHELL_GIT}}"
+        -e QS_TAG="{{.QUICKSHELL_TAG}}"
+        -e QS_COMMIT="{{.QUICKSHELL_COMMIT}}"
+        -e QS_KEY="{{.QUICKSHELL_KEY}}"
+        "{{.TOOLBOX_IMAGE}}"
+        bash /src/quickshell/build-rpm.sh
+
+  path:
+    desc: Print the path of the RPM for the current pins
+    silent: true
+    cmds:
+      - echo "{{.RPM}}"

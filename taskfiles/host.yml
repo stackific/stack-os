@@ -1,0 +1,36 @@
+version: "3"
+
+# Host tools every project needs, installed by `task setup` when missing.
+# Bun and uv go into the user's home with their official installers (no sudo);
+# podman and toolbox come from dnf, and ship preinstalled on Fedora Workstation
+# and the Atomic desktops, so sudo is only asked for on a bare host. Each task
+# is skipped when its tool is already on PATH.
+tasks:
+  install:
+    desc: Install the host tools the repository needs (bun, uv, podman, toolbox)
+    cmds:
+      - task: bun
+      - task: uv
+      - task: containers
+
+  bun:
+    internal: true
+    status:
+      - command -v bun
+    cmds:
+      - curl -fsSL https://bun.sh/install | bash
+
+  uv:
+    internal: true
+    status:
+      - command -v uv
+    cmds:
+      - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  containers:
+    internal: true
+    status:
+      - command -v podman
+      - command -v toolbox
+    cmds:
+      - sudo dnf install -y podman toolbox

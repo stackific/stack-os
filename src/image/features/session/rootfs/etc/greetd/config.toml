@@ -1,0 +1,9 @@
+# greetd's configuration (decision 02). greetd reads only /etc, so this is
+# one of the few files the image places there. tuigreet is a text-mode
+# greeter: it remembers the last user and offers only the Stack OS session.
+[terminal]
+vt = 1
+
+[default_session]
+command = "tuigreet --remember --asterisks --sessions /usr/share/stack-os/wayland-sessions"
+user = "greetd"

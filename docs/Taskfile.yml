@@ -1,0 +1,37 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install docs dependencies
+    sources:
+      - package.json
+      - bun.lock
+    generates:
+      - node_modules/.bun-tag
+    cmds:
+      - bun install
+      - touch node_modules/.bun-tag
+
+  dev:
+    desc: Start the docs dev server
+    deps: [install]
+    cmds:
+      - bun run dev {{.CLI_ARGS}}
+
+  build:
+    desc: Build the docs site
+    deps: [install]
+    cmds:
+      - bun run build
+
+  check:
+    desc: Type-check the docs site
+    deps: [install]
+    cmds:
+      - bun run check
+
+  astro:
+    desc: Run an Astro CLI command, e.g. `task docs:astro -- add mdx`
+    deps: [install]
+    cmds:
+      - bun astro {{.CLI_ARGS}}
