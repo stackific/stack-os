@@ -55,3 +55,6 @@ references/*
 !references/.cocoindex_code/
 references/.cocoindex_code/*
 !references/.cocoindex_code/settings.yml
+
+# Build output: RPMs, images and ISOs (decision 01).
+output/

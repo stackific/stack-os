@@ -1,4 +1,4 @@
-# Git hooks, installed by `bun install` at the repo root. Run every check on all files: `bun run lint`.
+# Git hooks, installed by `task setup`. Run every check on all files: `task lint`.
 # Each job only runs when matching files are staged. references/ is never checked or formatted.
 
 pre-commit:
@@ -12,9 +12,8 @@ pre-commit:
       stage_fixed: true
 
     - name: astro check
-      root: "docs/"
-      glob: "*.{ts,mjs,astro,md,mdx}"
-      run: bun run check
+      glob: "docs/**/*.{ts,mjs,astro,md,mdx}"
+      run: task docs:check
 
     - name: prettier (yaml)
       exclude: *exclude_refs

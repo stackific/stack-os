@@ -24,7 +24,7 @@
     "ponytail@ponytail": true
   },
   "permissions": {
-    "allow": ["Bash(bun install)", "Bash(bun run:*)"],
+    "allow": ["Bash(task:*)"],
     "deny": [
       "Bash(git push origin main:*)",
       "Bash(git push --force:*)",

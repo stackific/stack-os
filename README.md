@@ -3,25 +3,25 @@
 ## Requirements
 
 - [Git](https://git-scm.com/)
-- [Bun](https://bun.sh/)
-- [uv](https://docs.astral.sh/uv/)
+- [Task](https://taskfile.dev/docs/installation)
 
 ## Setup
 
 ```sh
 git clone https://github.com/stackific/stack-os.git
 cd stack-os
-bun install          # installs Task and the git hooks
-bunx task setup      # installs every project's dependencies
+task setup   # installs every dependency (Bun, uv, podman, toolbox if missing), the git hooks and the dev toolbox
 ```
 
 ## Run
 
 ```sh
-bunx task                # list all tasks
-bunx task docs:dev       # docs site at http://localhost:4321
-bunx task docs:build     # build the docs site
-bunx task lint           # run every check on all files
+task                   # list all tasks
+task dev:setup         # build the shell dev toolbox (Mango, foot, pinned Quickshell)
+task dev:run           # nested Mango running the shell from src/shell/, live reload
+task docs:dev          # docs site at http://localhost:4321
+task docs:build        # build the docs site
+task lint              # run every check on all files
 ```
 
 ## Semantic index (optional)
@@ -29,6 +29,6 @@ bunx task lint           # run every check on all files
 Clone the reference projects into `references/` (see `meta/roadmaps/refs.md`), then:
 
 ```sh
-bunx task index:setup    # once per machine
-bunx task index:build    # after adding or updating references/
+task index:setup   # once per machine
+task index:build   # after adding or updating references/
 ```

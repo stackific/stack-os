@@ -1,31 +1,61 @@
 version: "3"
 
 # Each project folder has its own Taskfile.yml with an `install` task, included here and called by `setup`.
+
+# The user-level installers put bun in ~/.bun/bin and uv in ~/.local/bin; add
+# both so a fresh `task setup` can use them before the shell is restarted.
+env:
+  PATH:
+    sh: 'echo "$HOME/.bun/bin:$HOME/.local/bin:$PATH"'
+
+# Pins from versions.yml (decision 01), visible to every included Taskfile. The
+# variable is the key in upper case.
+vars:
+  TOOLBOX_IMAGE:
+    sh: 'sed -n "s/^toolbox_image: *//p" versions.yml'
+  QUICKSHELL_GIT:
+    sh: 'sed -n "s/^quickshell_git: *//p" versions.yml'
+  QUICKSHELL_TAG:
+    sh: 'sed -n "s/^quickshell_tag: *//p" versions.yml'
+  QUICKSHELL_COMMIT:
+    sh: 'sed -n "s/^quickshell_commit: *//p" versions.yml'
+  # Key of the Quickshell RPM: a hash of every input of its build (the pins,
+  # the builder image, the spec and the build script). See src/quickshell/Taskfile.yml.
+  QUICKSHELL_KEY:
+    sh: >-
+      { grep -E '^(toolbox_image|quickshell_[a-z]+):' versions.yml;
+      cat src/quickshell/quickshell.spec src/quickshell/build-rpm.sh; }
+      | sha256sum | cut -c1-16
+
 includes:
   docs:
     taskfile: ./docs/Taskfile.yml
     dir: ./docs
+  dev:
+    taskfile: ./src/dev/Taskfile.yml
+    dir: ./src/dev
+  quickshell:
+    taskfile: ./src/quickshell/Taskfile.yml
+    dir: ./src/quickshell
+  host: ./taskfiles/host.yml
   index: ./taskfiles/index.yml
-  # Not called by setup: the prototypes need system toolchains setup does not install.
-  proto:
-    taskfile: ./meta/prototypes/Taskfile.yml
-    dir: ./meta/prototypes
 
 tasks:
   default:
     cmds:
       - "{{.TASK_EXE}} --list"
 
+  # Everything a developer needs, in order: host tools, the root's JS tooling
+  # and git hooks, the docs site, then the Quickshell RPM and the dev toolbox.
+  # Each step is skipped when already done, so rerunning is cheap.
   setup:
-    desc: Install all dependencies and the git hooks
-    preconditions:
-      - sh: command -v bun
-        msg: Install Bun first, see README.md
-      - sh: command -v uv
-        msg: Install uv first, see README.md
+    desc: Install all dependencies, the git hooks and the dev toolbox
     cmds:
+      - task: host:install
       - bun install
       - task: docs:install
+      # Reaches quickshell:install and dev:install through its dependencies.
+      - task: dev:setup
 
   lint:
     desc: Run every pre-commit check on all files

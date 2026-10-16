@@ -1,0 +1,13 @@
+# Pinned inputs of every Stack OS build (decision 01). Nothing moves until a
+# line here changes; a bump is a deliberate commit. Flat `key: value` lines so
+# shell tools can read them without a YAML parser (see the root Taskfile.yml).
+
+# Fedora 44 toolbox image: base of the dev toolbox and of the Quickshell RPM
+# build until the image's own `minimal` stage exists (M1-4).
+toolbox_image: registry.fedoraproject.org/fedora-toolbox:44@sha256:1be401964f508679566cc0cf959449d6f3258be79fc1cdbab0c6e53dd1fe8940
+
+# Quickshell, built from source by `task quickshell:rpm` (decision 05). The build
+# fails if the tag no longer points at this commit.
+quickshell_git: https://git.outfoxxed.me/quickshell/quickshell.git
+quickshell_tag: v0.3.2
+quickshell_commit: 4f508be500dea6e5732cc3d50382a0048b17e7b1
