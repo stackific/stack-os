@@ -73,6 +73,14 @@ tasks:
       - task: scale:install
       - task: vm:install
 
+  # What the on-demand build workflow runs (.github/workflows/build.yml): the
+  # image, then the installer ISO, leaving exactly one output/*.iso.
+  iso:
+    desc: Build the image and the installer ISO, output/stack-os.iso (uses sudo)
+    cmds:
+      - task: image:build
+      - task: vm:iso
+
   lint:
     desc: Run every pre-commit check on all files
     cmds:

@@ -5,7 +5,7 @@ sidebar:
   order: 7
 ---
 
-001-07: VM boot test on a Btrfs root
+[001-07: VM boot test on a Btrfs root](https://github.com/stackific/stack-os/commit/d3e6cd5109c23fe0cf7c7f3efc2cac5fde31aa07)
 
 ## Goal
 

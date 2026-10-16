@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Boot test for the Stack OS disk (001-07), run inside the VM container.
+"""Boots Stack OS in QEMU inside the VM container: the boot test of the disk
+(001-07, the default), the same machine by hand (--interactive) and the
+installer ISO with a persistent disk (--install, 001-08).
 
 Boots /output/qcow2/disk.qcow2 on a snapshot (the disk never changes) with
 KVM and UEFI firmware (OVMF code plus a scratch copy of its variable store),
@@ -18,7 +20,10 @@ a serial console and a QEMU monitor on Unix sockets. Then:
 Exits non-zero on the first failed check, or as soon as QEMU stops.
 
 With --interactive it boots the same machine with a VNC display on port 5900
-and the serial console on stdio instead (`task vm:run`).
+and the serial console on stdio instead (`task vm:run`). With --install it
+boots /output/stack-os.iso from a CD drive with a blank 40 GiB disk,
+/output/install/disk.qcow2 (created if missing), and VNC; --install
+--boot-disk boots that installed disk instead (`task vm:installer`).
 """
 import os
 import shutil
@@ -38,17 +43,34 @@ USER, PASSWORD = "test", "test"
 qemu = None
 
 
-def machine():
-  """The QEMU command line shared by the test and `task vm:run`."""
-  shutil.copy(f"{OVMF}/OVMF_VARS.fd", VARS)
+def machine(drive=f"file={DISK},if=virtio,snapshot=on", vars_path=VARS):
+  """The QEMU command line shared by the test, `vm:run` and `vm:installer`."""
+  if not os.path.exists(vars_path):
+    shutil.copy(f"{OVMF}/OVMF_VARS.fd", vars_path)
   return [
     "qemu-system-x86_64", "-machine", "q35", "-enable-kvm", "-cpu", "host",
     "-m", "4096", "-smp", "4",
     "-drive", f"if=pflash,format=raw,readonly=on,file={OVMF}/OVMF_CODE.fd",
-    "-drive", f"if=pflash,format=raw,file={VARS}",
-    "-drive", f"file={DISK},if=virtio,snapshot=on",
+    "-drive", f"if=pflash,format=raw,file={vars_path}",
+    "-drive", drive,
     "-device", "virtio-vga",
   ]
+
+
+def install(boot_disk):
+  """Boots the installer ISO with a blank disk, or the installed disk. The
+  disk and its UEFI variables persist in /output/install, so the install
+  survives between the two runs."""
+  disk = "/output/install/disk.qcow2"
+  vars_path = "/output/install/OVMF_VARS.fd"
+  if not os.path.exists(disk):
+    subprocess.run(["qemu-img", "create", "-f", "qcow2", disk, "40G"], check=True)
+  args = machine(f"file={disk},if=virtio", vars_path)
+  if not boot_disk:
+    # OVMF boots by bootindex, not QEMU's -boot order: the CD goes first.
+    args += ["-drive", "file=/output/stack-os.iso,media=cdrom,if=none,id=cd",
+             "-device", "ide-cd,drive=cd,bootindex=0"]
+  os.execvp(args[0], args + ["-display", "vnc=0.0.0.0:0", "-serial", "mon:stdio"])
 
 
 def alive():
@@ -186,6 +208,8 @@ def test():
 
 
 if __name__ == "__main__":
+  if sys.argv[1:2] == ["--install"]:
+    install("--boot-disk" in sys.argv)
   if sys.argv[1:] == ["--interactive"]:
     os.execvp("qemu-system-x86_64", machine() + ["-display", "vnc=0.0.0.0:0", "-serial", "mon:stdio"])
   test()
